@@ -12,6 +12,31 @@ const path    = require('path');
 const fs      = require('fs');
 const crypto  = require('crypto');
 const db      = require('./db');
+const nodemailer = require('nodemailer');
+
+// Cấu hình SMTP gửi Mail
+let transporter = null;
+if (process.env.SMTP_HOST) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: parseInt(process.env.SMTP_PORT || '465') === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  // Kiểm tra kết nối SMTP khi khởi động
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error('❌ Lỗi kết nối SMTP Mail:', error.message);
+    } else {
+      console.log('✅ Kết nối SMTP Mail thành công! Sẵn sàng gửi thư.');
+    }
+  });
+} else {
+  console.warn('⚠️ SMTP_HOST chưa được cấu hình. Các tính năng gửi mail thông báo sẽ bị bỏ qua.');
+}
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -541,6 +566,76 @@ app.post('/api/member/login', async (req, res) => {
   }
 });
 
+// Quên mật khẩu Hội viên (cấp mật khẩu mới ngẫu nhiên và gửi mail)
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp email tài khoản.' });
+    }
+
+    const [rows] = await db.query('SELECT id, name FROM members WHERE email = ?', [email]);
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản hội viên nào được đăng ký với email này.' });
+    }
+
+    const member = rows[0];
+
+    // Tạo mật khẩu ngẫu nhiên 10 ký tự chữ và số
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let newPassword = '';
+    for (let i = 0; i < 10; i++) {
+      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE members SET password_hash = ? WHERE id = ?', [hash, member.id]);
+
+    // Gửi mail thông báo mật khẩu mới
+    if (transporter) {
+      const mailOptions = {
+        from: process.env.SMTP_FROM || `"Đồ Sơn" <${process.env.SMTP_USER}>`,
+        to: email,
+        bcc: process.env.SMTP_BCC || undefined,
+        subject: '[Đồ Sơn] Khôi phục mật khẩu tài khoản',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+            <h2 style="color: #1E88E5; border-bottom: 2px solid #1E88E5; padding-bottom: 10px;">Cấp lại mật khẩu thành công!</h2>
+            <p>Xin chào <strong>${member.name}</strong>,</p>
+            <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu của bạn cho tài khoản kết nối doanh nghiệp trên <strong>Đồ Sơn</strong>.</p>
+            <p>Mật khẩu mới của bạn đã được khởi tạo ngẫu nhiên như sau:</p>
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center;">
+              <span style="font-family: monospace; font-size: 20px; font-weight: bold; color: #1E88E5; letter-spacing: 2px;">${newPassword}</span>
+            </div>
+            <p style="color: #d32f2f;"><strong>Khuyến cáo bảo mật:</strong> Vui lòng đăng nhập ngay bằng mật khẩu tạm thời này và truy cập vào Dashboard thành viên để đổi lại mật khẩu cá nhân của bạn.</p>
+            <p>Trân trọng,<br/>Ban Quản Trị Đồ Sơn</p>
+            <p style="margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 15px; font-size: 12px; color: #999;">Đây là email tự động từ hệ thống Đồ Sơn. Vui lòng không trả lời thư này.</p>
+          </div>
+        `
+      };
+      transporter.sendMail(mailOptions, (mailErr, info) => {
+        if (mailErr) {
+          console.error("❌ Lỗi gửi email khôi phục mật khẩu:", mailErr);
+        } else {
+          console.log("✅ Đã gửi email cấp lại mật khẩu cho:", email);
+        }
+      });
+    }
+
+    // Chế độ DEV local: Trả về mật khẩu trực tiếp nếu chưa cấu hình SMTP để dễ dàng test
+    if (!process.env.SMTP_HOST) {
+      return res.json({ 
+        success: true, 
+        message: `[DEV MODE] SMTP chưa được cấu hình. Mật khẩu mới được tạo là: ${newPassword} (Vui lòng điền biến SMTP vào .env ở production)` 
+      });
+    }
+
+    res.json({ success: true, message: 'Mật khẩu mới đã được gửi về email của bạn.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Đăng xuất Hội viên
 app.post('/api/member/logout', memberAuthMiddleware, async (req, res) => {
   try {
@@ -567,12 +662,12 @@ app.get('/api/member/profile', memberAuthMiddleware, async (req, res) => {
   }
 });
 
-// Cập nhật Hồ sơ Hội viên
+// Cập nhật Hồ sơ Hội viên (Không thay đổi mật khẩu trực tiếp ở đây)
 app.put('/api/member/profile', memberAuthMiddleware, async (req, res) => {
   try {
     const {
       name, tax_code, license, industry, size, address, city, website, social,
-      description, contact_name, contact_pos, phone, goal, password
+      description, contact_name, contact_pos, phone, goal
     } = req.body;
 
     if (!name) return res.status(400).json({ success: false, error: 'Tên doanh nghiệp không được trống.' });
@@ -585,20 +680,41 @@ app.put('/api/member/profile', memberAuthMiddleware, async (req, res) => {
       description || '', contact_name || '', contact_pos || '', phone || '', goal || ''
     ];
 
-    if (password && password.trim() !== '') {
-      if (password.length < 8) {
-        return res.status(400).json({ success: false, error: 'Mật khẩu phải tối thiểu 8 ký tự.' });
-      }
-      const hash = await bcrypt.hash(password, 10);
-      sql += `, password_hash=?`;
-      params.push(hash);
-    }
-
     sql += ` WHERE id=?`;
     params.push(req.member.id);
 
     await db.query(sql, params);
     res.json({ success: true, message: 'Đã cập nhật hồ sơ doanh nghiệp thành công.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Đổi mật khẩu Hội viên
+app.post('/api/member/change-password', memberAuthMiddleware, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp mật khẩu cũ và mật khẩu mới.' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, error: 'Mật khẩu mới phải tối thiểu 8 ký tự.' });
+    }
+
+    const [rows] = await db.query('SELECT password_hash FROM members WHERE id = ?', [req.member.id]);
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+    }
+
+    const match = await bcrypt.compare(oldPassword, rows[0].password_hash);
+    if (!match) {
+      return res.status(400).json({ success: false, error: 'Mật khẩu hiện tại (cũ) không chính xác.' });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE members SET password_hash = ? WHERE id = ?', [hash, req.member.id]);
+
+    res.json({ success: true, message: 'Đổi mật khẩu thành công!' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -941,6 +1057,51 @@ app.post('/api/members', async (req, res) => {
       [name, tax_code, license, industry, size, address, city || null, website, social,
        description, tier || 'Silver', contact_name, contact_pos, email, email, hash, phone, goal, referral]
     );
+
+    // Gửi email thông báo đăng ký
+    if (transporter) {
+      const mailOptions = {
+        from: process.env.SMTP_FROM || `"Đồ Sơn" <${process.env.SMTP_USER}>`,
+        to: email,
+        bcc: process.env.SMTP_BCC || undefined,
+        subject: '[Đồ Sơn] Đăng ký tài khoản thành công',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+            <h2 style="color: #1E88E5; border-bottom: 2px solid #1E88E5; padding-bottom: 10px;">Gia nhập Đồ Sơn Connection thành công!</h2>
+            <p>Xin chào <strong>${name}</strong>,</p>
+            <p>Cảm ơn doanh nghiệp của bạn đã đăng ký tài khoản hội viên trên nền tảng kết nối giao thương <strong>Đồ Sơn</strong>.</p>
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 15px 0;">
+              <h4 style="margin-top: 0; color: #333;">Thông tin đăng ký của bạn:</h4>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 4px 0; color: #666; width: 150px;"><strong>Doanh nghiệp:</strong></td>
+                  <td style="padding: 4px 0; color: #333;">${name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>Email đăng nhập:</strong></td>
+                  <td style="padding: 4px 0; color: #333;">${email}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #666;"><strong>Gói hội viên:</strong></td>
+                  <td style="padding: 4px 0; color: #333;">${tier || 'Silver'}</td>
+                </tr>
+              </table>
+            </div>
+            <p>Hồ sơ đăng ký của bạn hiện đang ở trạng thái <strong>Chờ duyệt (Pending)</strong>. Ban quản trị sẽ nhanh chóng kiểm tra thông tin và phê duyệt tài khoản của bạn trong thời gian sớm nhất.</p>
+            <p>Khi hồ sơ được phê duyệt, bạn sẽ nhận được thông báo tiếp theo và có thể đăng nhập để sử dụng đầy đủ các tính năng giao thương và trợ lý AI.</p>
+            <p style="margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 15px; font-size: 12px; color: #999;">Đây là email tự động từ hệ thống Đồ Sơn. Vui lòng không trả lời thư này.</p>
+          </div>
+        `
+      };
+      transporter.sendMail(mailOptions, (mailErr, info) => {
+        if (mailErr) {
+          console.error("❌ Lỗi gửi email đăng ký:", mailErr);
+        } else {
+          console.log("✅ Đã gửi email xác nhận đăng ký thành công:", info.response);
+        }
+      });
+    }
+
     res.json({ success: true, id: result.insertId, message: 'Đăng ký thành công! Chờ admin xét duyệt.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

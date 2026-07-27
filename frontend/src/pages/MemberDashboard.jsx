@@ -32,6 +32,19 @@ export const MemberDashboard = () => {
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [showPassMap, setShowPassMap] = useState({
+    old: false,
+    new: false,
+    confirm: false
+  });
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passMessage, setPassMessage] = useState({ text: '', type: '' });
+
   // Modal State for new Post
   const [modalOpen, setModalOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
@@ -117,6 +130,42 @@ export const MemberDashboard = () => {
       setMessage({ text: err.message, type: 'danger' });
     } finally {
       setUpdatingProfile(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPassMessage({ text: '', type: '' });
+
+    if (passwordForm.newPassword.length < 8) {
+      setPassMessage({ text: 'Mật khẩu mới phải từ 8 ký tự trở lên.', type: 'danger' });
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+      setPassMessage({ text: 'Mật khẩu mới và mật khẩu xác nhận không khớp.', type: 'danger' });
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const res = await fetch('/api/member/change-password', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Có lỗi xảy ra.');
+      }
+      setPassMessage({ text: 'Thay đổi mật khẩu thành công!', type: 'success' });
+      setPasswordForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
+    } catch (err) {
+      setPassMessage({ text: err.message, type: 'danger' });
+    } finally {
+      setUpdatingPassword(false);
     }
   };
 
@@ -544,15 +593,101 @@ export const MemberDashboard = () => {
                     <label>{t('label_short_description')}</label>
                     <textarea id="description" value={profileData.description} onChange={handleProfileChange} style={{ height: '80px', resize: 'vertical' }} />
                   </div>
-                  <div className="fg" style={{ gridColumn: 'span 2', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
-                    <label style={{ color: 'var(--amber)' }}>{t('label_reset_password_desc')}</label>
-                    <input type="password" id="password" value={profileData.password} onChange={handleProfileChange} placeholder={t('placeholder_password_min_8')} />
-                  </div>
                 </div>
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                   <button type="submit" className="btn btn-primary" disabled={updatingProfile}>
                     {updatingProfile ? <><i className="ti ti-loader animate-spin"></i> {t('btn_saving')}</> : <><i className="ti ti-save"></i> {t('btn_save_profile')}</>}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Thẻ Đổi Mật Khẩu Riêng Biệt */}
+            <div className="dash-card" style={{ marginTop: '1.5rem' }}>
+              <div className="card-title">
+                <i className="ti ti-key"></i> Đổi mật khẩu bảo mật
+              </div>
+
+              {passMessage.text && (
+                <div style={{ 
+                  background: passMessage.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', 
+                  border: `1px solid ${passMessage.type === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`, 
+                  color: passMessage.type === 'success' ? '#A7F3D0' : '#FCA5A5',
+                  padding: '10px 14px', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '13px'
+                }}>
+                  {passMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordSubmit}>
+                <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                  <div className="fg" style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', fontWeight: 600 }}>Mật khẩu hiện tại (cũ) <span style={{ color: 'var(--rose)' }}>*</span></label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassMap.old ? "text" : "password"} 
+                        value={passwordForm.oldPassword} 
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, oldPassword: e.target.value }))} 
+                        required 
+                        style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassMap(prev => ({ ...prev, old: !prev.old }))}
+                        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', outline: 'none', color: '#64748B', display: 'flex', alignItems: 'center' }}
+                      >
+                        <i className={showPassMap.old ? "ti ti-eye-off" : "ti ti-eye"} style={{ fontSize: '16px' }}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="fg" style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', fontWeight: 600 }}>Mật khẩu mới <span style={{ color: 'var(--rose)' }}>*</span></label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassMap.new ? "text" : "password"} 
+                        value={passwordForm.newPassword} 
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))} 
+                        required 
+                        placeholder="Tối thiểu 8 ký tự"
+                        style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassMap(prev => ({ ...prev, new: !prev.new }))}
+                        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', outline: 'none', color: '#64748B', display: 'flex', alignItems: 'center' }}
+                      >
+                        <i className={showPassMap.new ? "ti ti-eye-off" : "ti ti-eye"} style={{ fontSize: '16px' }}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="fg" style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', fontWeight: 600 }}>Xác nhận mật khẩu mới <span style={{ color: 'var(--rose)' }}>*</span></label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassMap.confirm ? "text" : "password"} 
+                        value={passwordForm.confirmNewPassword} 
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmNewPassword: e.target.value }))} 
+                        required 
+                        placeholder="Nhập lại mật khẩu mới"
+                        style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassMap(prev => ({ ...prev, confirm: !prev.confirm }))}
+                        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', outline: 'none', color: '#64748B', display: 'flex', alignItems: 'center' }}
+                      >
+                        <i className={showPassMap.confirm ? "ti ti-eye-off" : "ti ti-eye"} style={{ fontSize: '16px' }}></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="submit" className="btn btn-primary" disabled={updatingPassword}>
+                    {updatingPassword ? <><i className="ti ti-loader animate-spin"></i> Đang đổi...</> : <><i className="ti ti-key"></i> Đổi mật khẩu</>}
                   </button>
                 </div>
               </form>

@@ -34,6 +34,8 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -74,6 +76,9 @@ export const Register = () => {
   const validateStep3 = () => {
     if (!formData.password) return t('err_fill_password');
     if (formData.password.length < 8) return t('err_password_min_8');
+    if (formData.password !== confirmPassword) {
+      return t('currentLang') === 'vi' ? 'Mật khẩu xác nhận không khớp.' : 'Passwords do not match.';
+    }
     return null;
   };
 
@@ -421,9 +426,41 @@ export const Register = () => {
                       <div style={{ fontSize: '11px', color: 'var(--text-light-muted)', marginTop: '4px' }}>{t('login_email_help_text')}</div>
                     </div>
 
-                    <div className="fg" style={{ marginBottom: '1.5rem' }}>
+                    <div className="fg" style={{ marginBottom: '1.25rem' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_setup_password')} <span style={{ color: 'var(--rose)' }}>*</span></label>
-                      <input type="password" id="r-password" value={formData.password} onChange={handleInputChange} placeholder={t('placeholder_setup_password')} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }} />
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type={showPassword ? 'text' : 'password'} 
+                          id="r-password" 
+                          value={formData.password} 
+                          onChange={handleInputChange} 
+                          placeholder={t('placeholder_setup_password')} 
+                          style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }} 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowPassword(!showPassword)} 
+                          style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', color: '#64748B' }}
+                        >
+                          <i className={showPassword ? "ti ti-eye-off" : "ti ti-eye"} style={{ fontSize: '16px' }}></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="fg" style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                        {t('currentLang') === 'vi' ? 'Xác nhận mật khẩu' : 'Confirm Password'} <span style={{ color: 'var(--rose)' }}>*</span>
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type={showPassword ? 'text' : 'password'} 
+                          id="r-confirm-password" 
+                          value={confirmPassword} 
+                          onChange={(e) => setConfirmPassword(e.target.value)} 
+                          placeholder={t('currentLang') === 'vi' ? 'Nhập lại mật khẩu...' : 'Re-enter password...'} 
+                          style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }} 
+                        />
+                      </div>
                     </div>
 
                     <div style={{ marginBottom: '1.5rem' }}>
