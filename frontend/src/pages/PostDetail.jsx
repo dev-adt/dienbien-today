@@ -164,6 +164,30 @@ export const PostDetail = () => {
     'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80'
   ];
 
+  // Ngăn chặn hiện tượng tự động cuộn (giật trang) khi click chuyển Slide trong iframe
+  useEffect(() => {
+    let savedScrollY = 0;
+    const handleScroll = () => {
+      savedScrollY = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    const handleBlur = () => {
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        const targetY = savedScrollY;
+        requestAnimationFrame(() => {
+          window.scrollTo(0, targetY);
+        });
+      }
+    };
+
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchPost = async () => {
       setTranslatedTitle('');
@@ -391,20 +415,23 @@ export const PostDetail = () => {
                 .post-html-body iframe {
                   width: 100% !important;
                   max-width: 100% !important;
-                  min-height: 650px;
+                  aspect-ratio: 16 / 9;
+                  min-height: 520px;
+                  height: auto;
                   border-radius: 12px;
                   border: none;
                   margin: 20px 0;
                   box-shadow: 0 12px 30px -5px rgba(0,0,0,0.12);
+                  display: block;
                 }
                 @media (max-width: 1024px) {
                   .post-html-body iframe {
-                    min-height: 450px;
+                    min-height: 400px;
                   }
                 }
                 @media (max-width: 640px) {
                   .post-html-body iframe {
-                    min-height: 320px;
+                    min-height: 260px;
                   }
                 }
               `}</style>
