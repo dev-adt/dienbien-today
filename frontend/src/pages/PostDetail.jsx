@@ -252,8 +252,8 @@ export const PostDetail = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
             
             {/* Cover Image */}
-            <div style={{ width: '100%', maxHeight: '520px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-              <img src={imgUrl} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ width: '100%', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--surface-0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={imgUrl} alt={post.title} style={{ width: '100%', height: 'auto', maxHeight: '720px', objectFit: 'contain', display: 'block' }} />
             </div>
 
             {/* Title & Meta Info */}
