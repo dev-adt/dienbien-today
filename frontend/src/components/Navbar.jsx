@@ -16,9 +16,8 @@ export const Navbar = () => {
     document.body.classList.remove('light-theme');
   }, []);
 
-
   const getInitials = (name) => {
-    if (!name) return 'BH';
+    if (!name) return 'DS';
     return name.trim().split(/\s+/).map(w => w[0]).join('').substring(0, 2).toUpperCase();
   };
 
@@ -30,7 +29,6 @@ export const Navbar = () => {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
-      // Nếu không ở trang chủ, để Route chuyển về / rồi cuộn
       navigate('/' + anchor);
     }
   };
@@ -38,244 +36,391 @@ export const Navbar = () => {
   const currentLangDetails = getLangDetails();
 
   return (
-    <>
-      <nav style={{ zIndex: 1000 }}>
-      <Link to="/" className="nav-logo" style={{ textDecoration: 'none' }}>
-        <div className="nav-logo-icon"><img src="/doson_logo.png" alt="Logo" style={{ width: '20px', height: '20px', objectFit: 'contain' }} /></div>
-        Đồ Sơn
-      </Link>
-
-      <div className="nav-links">
-        <div className="nav-link nav-dropdown">
-          {t('menu_members')} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
-          <div className="nav-dropdown-menu">
-            <Link to="/members" className="nav-dropdown-item">{t('menu_directory')} <span className="nav-dropdown-sub">&gt;</span></Link>
-            <a href="#tiers" onClick={(e) => handleAnchorClick(e, '#tiers')} className="nav-dropdown-item">{t('menu_tiers')} <span className="nav-dropdown-sub">&gt;</span></a>
-          </div>
-        </div>
-
-        <div className="nav-link nav-dropdown">
-          {t('menu_marketplace')} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
-          <div className="nav-dropdown-menu">
-            <a href="#posts" onClick={(e) => handleAnchorClick(e, '#posts')} className="nav-dropdown-item">{t('menu_opportunities')} <span className="nav-dropdown-sub">&gt;</span></a>
-            <Link to="/posts" className="nav-dropdown-item">{t('menu_national_feeds')} <span className="nav-dropdown-sub">&gt;</span></Link>
-          </div>
-        </div>
-
-        <Link to="/events" className="nav-link">{t('menu_events')}</Link>
-        <Link to="/ai-chat" className="nav-link">{t('menu_ai')}</Link>
-        <Link to="/guide" className="nav-link">{t('menu_guide')}</Link>
-      </div>
-
-      <div className="nav-right">
-        {/* Nút Tìm kiếm */}
-        <Link to="/search" style={{ fontSize: '18px', color: 'var(--text-dark-secondary)', marginRight: '8px', padding: '4px' }}>
-          <i className="ti ti-search"></i>
-        </Link>
-
-        {/* Nút Ngôn ngữ */}
-        <div style={{ position: 'relative', marginRight: '8px' }}>
-          <button 
-            onClick={() => setLangOpen(!langOpen)}
-            style={{
-              background: 'rgba(12,35,64,0.06)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--text-primary)',
-              fontSize: '11px',
-              fontWeight: '600',
-              padding: '4px 10px',
-              borderRadius: '99px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <span>{currentLangDetails.flag}</span>
-            <span>{currentLangDetails.label}</span>
-          </button>
-          {langOpen && (
-            <div 
+    <header className="header-wrapper" style={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: '#ffffff', boxShadow: '0 2px 12px rgba(12, 35, 64, 0.08)' }}>
+      {/* 4. Thanh thông tin phía trên (Top Announcement Bar) */}
+      <div 
+        className="top-info-bar"
+        style={{
+          backgroundColor: '#0c2340',
+          color: '#e2f0ff',
+          fontSize: '12px',
+          padding: '6px 0',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
+        <div 
+          className="public-container"
+          style={{
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+            padding: '0 1rem'
+          }}
+        >
+          {/* Left Announcement message */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span 
               style={{
-                position: 'absolute',
-                top: '110%',
-                right: 0,
-                backgroundColor: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '6px 0',
-                minWidth: '100px',
-                boxShadow: 'var(--shadow-lg)',
-                zIndex: 2000
+                backgroundColor: '#0284c7',
+                color: '#ffffff',
+                fontSize: '10px',
+                fontWeight: '700',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                letterSpacing: '0.05em'
               }}
             >
-              {Object.keys(LANGS).map((langKey) => (
-                <button
-                  key={langKey}
-                  onClick={() => {
-                    changeLang(langKey);
-                    setLangOpen(false);
-                  }}
+              DOSON.TODAY
+            </span>
+            <span style={{ color: '#93b4d4', fontWeight: '400' }}>
+              {t('topbar_msg')}
+            </span>
+          </div>
+
+          {/* Right Top Links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link 
+              to="/guide" 
+              style={{ color: '#e2f0ff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <i className="ti ti-help-circle" style={{ fontSize: '14px' }}></i>
+              <span>{t('topbar_contact')}</span>
+            </Link>
+
+            {/* Lang switcher in topbar */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>{currentLangDetails.flag}</span>
+                <span>{currentLangDetails.label}</span>
+                <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
+              </button>
+              {langOpen && (
+                <div
                   style={{
-                    width: '100%',
-                    padding: '6px 12px',
-                    background: 'none',
-                    border: 'none',
-                    color: currentLang === langKey ? 'var(--primary)' : 'var(--text-secondary)',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: currentLang === langKey ? 'var(--surface-0)' : 'transparent'
+                    position: 'absolute',
+                    top: '110%',
+                    right: 0,
+                    backgroundColor: '#0c2340',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 0',
+                    minWidth: '110px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                    zIndex: 2000
                   }}
                 >
-                  <span>{LANGS[langKey].flag}</span>
-                  <span>{LANGS[langKey].label}</span>
-                </button>
-              ))}
+                  {Object.keys(LANGS).map((langKey) => (
+                    <button
+                      key={langKey}
+                      onClick={() => {
+                        changeLang(langKey);
+                        setLangOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '6px 12px',
+                        background: 'none',
+                        border: 'none',
+                        color: currentLang === langKey ? '#38bdf8' : '#e2f0ff',
+                        textAlign: 'left',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: currentLang === langKey ? 'rgba(255,255,255,0.08)' : 'transparent'
+                      }}
+                    >
+                      <span>{LANGS[langKey].flag}</span>
+                      <span>{LANGS[langKey].label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Chuông báo */}
-        <div style={{ position: 'relative', marginRight: '12px' }}>
-          <Link to={role === 'guest' ? "/login" : (role === 'admin' ? "/admin-dashboard" : "/member-dashboard")} style={{ fontSize: '18px', color: 'var(--text-dark-secondary)', padding: '4px', display: 'block' }}>
-            <i className="ti ti-bell"></i>
-            {role !== 'guest' && (
-              <span style={{ position: 'absolute', top: '1px', right: '1px', width: '6px', height: '6px', backgroundColor: 'var(--rose)', borderRadius: '50%' }}></span>
+            {/* Auth / User Status in top bar */}
+            {role === 'guest' ? (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Link to="/login" style={{ color: '#e2f0ff', textDecoration: 'none', fontWeight: '500' }}>
+                  {t('menu_login')}
+                </Link>
+                <span style={{ color: '#475569' }}>|</span>
+                <Link to="/register" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: '600' }}>
+                  {t('menu_register')}
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#93b4d4' }}>
+                  {t('topbar_welcome')}, <strong style={{ color: '#ffffff' }}>{user?.name || 'Thành viên'}</strong>
+                </span>
+                <button
+                  onClick={() => logout()}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f87171',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0
+                  }}
+                >
+                  {t('menu_logout')}
+                </button>
+              </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Thanh đầu trang chính (Main Header Nav) */}
+      <nav 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.75rem 1.5rem',
+          maxWidth: '1360px',
+          margin: '0 auto',
+          position: 'relative'
+        }}
+      >
+        {/* Brand Logo & Name */}
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <div 
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0c2340 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 10px rgba(2, 132, 199, 0.25)'
+            }}
+          >
+            <img src="/doson_logo.png" alt="Đồ Sơn Logo" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-title, sans-serif)', fontSize: '20px', fontWeight: '800', color: '#0c2340', leading: '1.2' }}>
+              Đồ Sơn
+            </div>
+            <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '-2px' }}>
+              Nền tảng kết nối & quảng bá
+            </div>
+          </div>
+        </Link>
+
+        {/* Desktop Navigation Links */}
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer' }}>
+            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+              {t('nav_explore')} <i className="ti ti-chevron-down" style={{ fontSize: '11px', marginLeft: '3px' }}></i>
+            </span>
+            <div className="nav-dropdown-menu">
+              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Tổng quan Đồ Sơn</a>
+              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Lịch sử & Di tích</a>
+              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Văn hóa & Lễ hội</a>
+            </div>
+          </div>
+
+          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer' }}>
+            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+              {t('nav_tourism')} <i className="ti ti-chevron-down" style={{ fontSize: '11px', marginLeft: '3px' }}></i>
+            </span>
+            <div className="nav-dropdown-menu">
+              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Điểm đến nổi bật</a>
+              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Nơi lưu trú & Resort</a>
+              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Ẩm thực & Hải sản</a>
+              <a href="#itinerary" onClick={(e) => handleAnchorClick(e, '#itinerary')} className="nav-dropdown-item">Lịch trình gợi ý</a>
+            </div>
+          </div>
+
+          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer' }}>
+            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+              {t('nav_business')} <i className="ti ti-chevron-down" style={{ fontSize: '11px', marginLeft: '3px' }}></i>
+            </span>
+            <div className="nav-dropdown-menu">
+              <Link to="/members" className="nav-dropdown-item">Danh bạ doanh nghiệp</Link>
+              <a href="#showroom" onClick={(e) => handleAnchorClick(e, '#showroom')} className="nav-dropdown-item">Sản phẩm OCOP tiêu biểu</a>
+              <Link to="/posts" className="nav-dropdown-item">Nhu cầu mua - bán</Link>
+            </div>
+          </div>
+
+          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer' }}>
+            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+              {t('nav_investment')} <i className="ti ti-chevron-down" style={{ fontSize: '11px', marginLeft: '3px' }}></i>
+            </span>
+            <div className="nav-dropdown-menu">
+              <a href="#investment" onClick={(e) => handleAnchorClick(e, '#investment')} className="nav-dropdown-item">Dự án & Cơ hội hợp tác</a>
+              <a href="#investment" onClick={(e) => handleAnchorClick(e, '#investment')} className="nav-dropdown-item">Lĩnh vực tiềm năng</a>
+            </div>
+          </div>
+
+          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer' }}>
+            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+              {t('nav_community')} <i className="ti ti-chevron-down" style={{ fontSize: '11px', marginLeft: '3px' }}></i>
+            </span>
+            <div className="nav-dropdown-menu">
+              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">Người Đồ Sơn xa quê</a>
+              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">Chuyên gia & Cố vấn</a>
+              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">CLB Doanh nhân</a>
+            </div>
+          </div>
+
+          <Link to="/events" className="nav-link" style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px', textDecoration: 'none' }}>
+            {t('nav_news')}
+          </Link>
+
+          <Link 
+            to="/ai-chat" 
+            className="nav-link"
+            style={{
+              fontWeight: '700',
+              color: '#0284c7',
+              fontSize: '13.5px',
+              textDecoration: 'none',
+              backgroundColor: '#e0f2fe',
+              padding: '5px 12px',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            <i className="ti ti-sparkles" style={{ fontSize: '15px' }}></i>
+            {t('nav_ai')}
           </Link>
         </div>
 
-        {/* Avatar hiển thị tùy trạng thái */}
-        {role === 'guest' ? (
-          <Link to="/login" className="av-sm" style={{ cursor: 'pointer', textDecoration: 'none' }} id="nav-av">BH</Link>
-        ) : role === 'admin' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Link to="/admin-dashboard" className="av-sm" style={{ cursor: 'pointer', textDecoration: 'none' }}>
-              {getInitials(user?.name || 'Admin')}
-            </Link>
-            <button 
-              onClick={() => {
-                if (confirm('Bạn có muốn đăng xuất tài khoản Admin?')) logout();
-              }}
+        {/* Right side Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Search Button */}
+          <Link 
+            to="/search" 
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: '#f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#334155',
+              textDecoration: 'none',
+              fontSize: '18px'
+            }}
+            title="Tìm kiếm"
+          >
+            <i className="ti ti-search"></i>
+          </Link>
+
+          {/* + Đăng nội dung Button */}
+          <Link
+            to={role === 'guest' ? "/register" : "/member-dashboard"}
+            style={{
+              backgroundColor: '#0284c7',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: '700',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+            }}
+          >
+            {t('btn_post_content')}
+          </Link>
+
+          {/* User Profile Avatar */}
+          {role !== 'guest' && (
+            <Link
+              to={role === 'admin' ? "/admin-dashboard" : "/member-dashboard"}
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--rose)',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
-                padding: '4px'
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: '#0c2340',
+                color: '#ffffff',
+                fontWeight: '700',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none'
               }}
-              title="Đăng xuất Admin"
+              title={user?.name || 'Dashboard'}
             >
-              <i className="ti ti-logout" style={{ fontSize: '16px' }}></i>
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Link to="/member-dashboard" className="av-sm" style={{ cursor: 'pointer', textDecoration: 'none' }} title={`${user?.name || ''} — Xem Dashboard`}>
               {getInitials(user?.name)}
             </Link>
-            <button 
-              onClick={() => {
-                if (confirm('Bạn có muốn đăng xuất tài khoản Hội viên?')) logout();
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--rose)',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
-                padding: '4px'
-              }}
-              title="Đăng xuất"
-            >
-              <i className="ti ti-logout" style={{ fontSize: '16px' }}></i>
-            </button>
-          </div>
-        )}
-        
-        {/* Mobile Menu Button */}
-        <button 
-          className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#0c2340',
+              fontSize: '24px',
+              cursor: 'pointer',
+              display: 'none',
+              padding: '4px'
+            }}
+          >
+            <i className={mobileMenuOpen ? "ti ti-x" : "ti ti-menu-2"}></i>
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Links Menu */}
+      {mobileMenuOpen && (
+        <div
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-primary)',
-            fontSize: '22px',
-            cursor: 'pointer',
-            padding: '4px',
-            display: 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: '8px'
+            backgroundColor: '#ffffff',
+            borderTop: '1px solid #e2e8f0',
+            padding: '1rem 1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
           }}
         >
-          <i className={mobileMenuOpen ? "ti ti-x" : "ti ti-menu-2"}></i>
-        </button>
-      </div>
-    </nav>
-
-    {/* Mobile Links Dropdown */}
-    {mobileMenuOpen && (
-      <div className="mobile-nav-menu" style={{
-        position: 'fixed',
-        top: '64px',
-        left: 0,
-        right: 0,
-        backgroundColor: 'var(--surface-2)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid var(--border)',
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-        zIndex: 999,
-        boxShadow: 'var(--shadow-lg)',
-        boxSizing: 'border-box'
-      }}>
-        {/* Members dropdown items list inline */}
-        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13.5px', borderBottom: '1px solid var(--border-strong)', paddingBottom: '6px' }}>
-          {t('menu_members')}
+          <a href="#explore" onClick={(e) => { handleAnchorClick(e, '#explore'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_explore')}</a>
+          <a href="#tourism" onClick={(e) => { handleAnchorClick(e, '#tourism'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_tourism')}</a>
+          <Link to="/members" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_business')}</Link>
+          <a href="#investment" onClick={(e) => { handleAnchorClick(e, '#investment'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_investment')}</a>
+          <a href="#community" onClick={(e) => { handleAnchorClick(e, '#community'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_community')}</a>
+          <Link to="/events" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_news')}</Link>
+          <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#0284c7', fontWeight: '700' }}>{t('nav_ai')}</Link>
         </div>
-        <Link to="/members" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', paddingLeft: '12px', fontSize: '13px' }}>
-          {t('menu_directory')}
-        </Link>
-        <a href="#tiers" onClick={(e) => { handleAnchorClick(e, '#tiers'); setMobileMenuOpen(false); }} style={{ color: 'var(--text-secondary)', textDecoration: 'none', paddingLeft: '12px', fontSize: '13px' }}>
-          {t('menu_tiers')}
-        </a>
-
-        {/* Marketplace inline list */}
-        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13.5px', borderBottom: '1px solid var(--border-strong)', paddingBottom: '6px', marginTop: '8px' }}>
-          {t('menu_marketplace')}
-        </div>
-        <a href="#posts" onClick={(e) => { handleAnchorClick(e, '#posts'); setMobileMenuOpen(false); }} style={{ color: 'var(--text-secondary)', textDecoration: 'none', paddingLeft: '12px', fontSize: '13px' }}>
-          {t('menu_opportunities')}
-        </a>
-        <Link to="/posts" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-secondary)', textDecoration: 'none', paddingLeft: '12px', fontSize: '13px' }}>
-          {t('menu_national_feeds')}
-        </Link>
-
-        {/* Simple Link items */}
-        <Link to="/events" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13.5px', borderBottom: '1px solid var(--border-strong)', paddingBottom: '8px', textDecoration: 'none', marginTop: '8px' }}>
-          {t('menu_events')}
-        </Link>
-        <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13.5px', borderBottom: '1px solid var(--border-strong)', paddingBottom: '8px', textDecoration: 'none' }}>
-          {t('menu_ai')}
-        </Link>
-        <Link to="/guide" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13.5px', borderBottom: '1px solid var(--border-strong)', paddingBottom: '8px', textDecoration: 'none' }}>
-          {t('menu_guide')}
-        </Link>
-      </div>
-    )}
-  </>
-);
+      )}
+    </header>
+  );
 };
+
 export default Navbar;
