@@ -20,11 +20,11 @@ export const Footer = () => {
               Đồ Sơn Today
             </div>
             <p style={{ lineHeight: '1.6', marginBottom: '1.2rem', color: '#93b4d4', fontSize: '12.5px' }}>
-              Nền tảng kết nối cộng đồng, doanh nghiệp, du lịch, đầu tư và quảng bá Đồ Sơn tích hợp trí tuệ nhân tạo (AI). Cửa ngõ mở hiện đại, thân thiện và giàu bản sắc.
+              {t('footer_brand_desc')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#cbd5e1', marginBottom: '1.2rem' }}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}><i className="ti ti-map-pin" style={{ color: '#38bdf8', marginTop: '2px' }}></i> 26 TT23, KĐT Văn Phú, Phường Kiến Hưng, Hà Nội</div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}><i className="ti ti-building" style={{ color: '#38bdf8', marginTop: '2px' }}></i> Văn phòng Đồ Sơn: Phường Đồ Sơn, TP. Hải Phòng</div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}><i className="ti ti-map-pin" style={{ color: '#38bdf8', marginTop: '2px' }}></i> {t('footer_address_hn')}</div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}><i className="ti ti-building" style={{ color: '#38bdf8', marginTop: '2px' }}></i> {t('footer_address_hp')}</div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><i className="ti ti-mail" style={{ color: '#38bdf8' }}></i> info@adtgroup.net</div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><i className="ti ti-phone" style={{ color: '#38bdf8' }}></i> 0986 354 152</div>
             </div>
@@ -43,13 +43,27 @@ export const Footer = () => {
               {t('footer_col2_title')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
-              <a href="#explore" style={{ color: '#93b4d4', textDecoration: 'none' }}>Tổng quan Đồ Sơn</a>
-              <a href="#tourism" style={{ color: '#93b4d4', textDecoration: 'none' }}>Điểm đến du lịch</a>
-              <a href="#tourism" style={{ color: '#93b4d4', textDecoration: 'none' }}>Ẩm thực & Hải sản</a>
-              <a href="#tourism" style={{ color: '#93b4d4', textDecoration: 'none' }}>Lưu trú & Resort</a>
-              <Link to="/events" style={{ color: '#93b4d4', textDecoration: 'none' }}>Sự kiện & Lễ hội</Link>
-              <a href="#map" style={{ color: '#93b4d4', textDecoration: 'none' }}>Bản đồ số Đồ Sơn</a>
-              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>Cẩm nang du khách</Link>
+              <Link to={`/posts?category=${encodeURIComponent('Khám phá Đồ Sơn')}&sub_category=${encodeURIComponent('Tổng quan Đồ Sơn')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_overview')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Du lịch')}&sub_category=${encodeURIComponent('Điểm đến nổi bật')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_destinations')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Du lịch')}&sub_category=${encodeURIComponent('Ẩm thực & Hải sản')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_cuisine')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Du lịch')}&sub_category=${encodeURIComponent('Nơi lưu trú & Resort')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_stay')}
+              </Link>
+              <Link to="/events" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_events')}
+              </Link>
+              <a href="/#map-section" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_digital_map')}
+              </a>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_travel_guide')}
+              </Link>
             </div>
           </div>
 
@@ -59,13 +73,27 @@ export const Footer = () => {
               {t('footer_col3_title')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
-              <Link to="/members" style={{ color: '#93b4d4', textDecoration: 'none' }}>Danh bạ doanh nghiệp</Link>
-              <a href="#showroom" style={{ color: '#93b4d4', textDecoration: 'none' }}>Sản phẩm OCOP Đồ Sơn</a>
-              <a href="#investment" style={{ color: '#93b4d4', textDecoration: 'none' }}>Cơ hội đầu tư</a>
-              <Link to="/posts" style={{ color: '#93b4d4', textDecoration: 'none' }}>Nhu cầu mua - bán</Link>
-              <a href="#community" style={{ color: '#93b4d4', textDecoration: 'none' }}>Cộng đồng Đồ Sơn xa quê</a>
-              <Link to="/register" style={{ color: '#93b4d4', textDecoration: 'none' }}>Trở thành thành viên</Link>
-              <Link to="/register" style={{ color: '#93b4d4', textDecoration: 'none' }}>Đăng ký hồ sơ DN</Link>
+              <Link to="/members" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_biz_dir')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Doanh nghiệp')}&sub_category=${encodeURIComponent('Sản phẩm OCOP tiêu biểu')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_ocop')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Đầu tư')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_investment')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Doanh nghiệp')}&sub_category=${encodeURIComponent('Nhu cầu mua - bán')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_trading_needs')}
+              </Link>
+              <Link to={`/posts?category=${encodeURIComponent('Cộng đồng')}`} style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_expats')}
+              </Link>
+              <Link to="/register" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_become_member')}
+              </Link>
+              <Link to="/register" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_reg_biz')}
+              </Link>
             </div>
           </div>
 
@@ -75,11 +103,21 @@ export const Footer = () => {
               {t('footer_col4_title')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
-              <Link to="/ai-chat" style={{ color: '#93b4d4', textDecoration: 'none' }}>Trợ lý AI Hướng dẫn</Link>
-              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>Hướng dẫn tạo hồ sơ</Link>
-              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>Liên hệ hỗ trợ</Link>
-              <a href="tel:0986354152" style={{ color: '#93b4d4', textDecoration: 'none' }}>Hotline phản hồi</a>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Sơ đồ trang web</a>
+              <Link to="/ai-chat" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_ai_guide')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_profile_guide')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_contact_supp')}
+              </Link>
+              <a href="tel:0986354152" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_hotline')}
+              </a>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_sitemap')}
+              </Link>
             </div>
           </div>
 
@@ -89,11 +127,21 @@ export const Footer = () => {
               {t('footer_col5_title')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Điều khoản sử dụng</a>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Chính sách bảo mật</a>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Chính sách Cookie</a>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Chính sách sử dụng AI</a>
-              <a href="#" style={{ color: '#93b4d4', textDecoration: 'none' }}>Miễn trừ trách nhiệm</a>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_terms')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_privacy')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_cookie_policy')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_ai_policy')}
+              </Link>
+              <Link to="/guide" style={{ color: '#93b4d4', textDecoration: 'none' }}>
+                {t('footer_link_disclaimer_link')}
+              </Link>
             </div>
           </div>
         </div>
@@ -129,7 +177,7 @@ export const Footer = () => {
           }}
         >
           <div>
-            © 2026 <strong>Doson.today</strong>. Bản quyền thuộc về ADT Group. Cập nhật ngày: 28/07/2026.
+            © 2026 <strong>Doson.today</strong>. {t('footer_rights')}. ADT Group.
           </div>
           <div style={{ display: 'flex', gap: '16px' }}>
             <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11.5px' }}>
