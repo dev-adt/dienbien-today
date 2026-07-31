@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -178,25 +178,86 @@ export const Home = () => {
     fetchEvents();
   }, [token]);
 
-  // Fetch Featured Members
+  // Fetch Member Businesses for Homepage Showroom (Prioritizing featured members, max 3)
   useEffect(() => {
     const fetchFeaturedMembers = async () => {
+      setLoadingMembers(true);
       try {
         const res = await fetch('/api/members?status=approved');
         if (res.ok) {
           const data = await res.json();
-          const all = data.data || [];
-          const featured = all.filter(m => m.is_featured === 1);
-          setFeaturedMembers(featured.slice(0, 3));
+          const allMembers = data.data || [];
+
+          // Sort members: is_featured === 1 comes first, then by tier priority (Platinum > Gold > Silver)
+          const sorted = [...allMembers].sort((a, b) => {
+            const featA = a.is_featured === 1 ? 1 : 0;
+            const featB = b.is_featured === 1 ? 1 : 0;
+            if (featB !== featA) return featB - featA;
+
+            const tierWeight = { Platinum: 3, Gold: 2, Silver: 1 };
+            const weightA = tierWeight[a.tier] || 0;
+            const weightB = tierWeight[b.tier] || 0;
+            if (weightB !== weightA) return weightB - weightA;
+
+            return (b.id || 0) - (a.id || 0);
+          });
+
+          setFeaturedMembers(sorted);
         }
       } catch (err) {
-        console.error('Error fetching featured members:', err);
+        console.error('Error fetching member businesses:', err);
       } finally {
         setLoadingMembers(false);
       }
     };
     fetchFeaturedMembers();
   }, []);
+
+  // Default fallback members to ensure clean 3-card layout if DB has fewer than 3 members
+  const defaultFallbackMembers = [
+    {
+      id: 'fb1',
+      name: 'HTX Nông nghiệp Đồ Sơn – Táo Bàng OCOP 4 sao',
+      badge: 'Sản phẩm OCOP địa phương',
+      status: 'Xác thực ✔',
+      is_featured: 1,
+      tier: 'Gold',
+      desc: 'Đặc sản Táo Bàng ngọt thanh nổi tiếng Đồ Sơn, chuẩn vệ sinh an toàn thực phẩm OCOP 4 sao.',
+      phone: '0904.555.666'
+    },
+    {
+      id: 'fb2',
+      name: 'Công ty CP Du lịch & Dịch vụ Hải Phòng',
+      badge: 'Doanh nghiệp tiêu biểu',
+      status: 'Thành viên Vàng ⭐',
+      is_featured: 1,
+      tier: 'Platinum',
+      desc: 'Kinh doanh chuỗi nhà hàng, khách sạn và tour lữ hành nội địa cao cấp tại Đồ Sơn.',
+      phone: '0225.3861.999'
+    },
+    {
+      id: 'fb3',
+      name: 'Cơ sở Chả Cá Thu & Nước Mắm Vạn Vân',
+      badge: 'Đặc sản truyền thống',
+      status: 'Xác thực ✔',
+      is_featured: 0,
+      tier: 'Silver',
+      desc: 'Nước mắm Cát Vân vang danh và chả cá Thu Đồ Sơn nguyên chất không chất bảo quản.',
+      phone: '0977.222.333'
+    }
+  ];
+
+  // Select top 3 member businesses prioritizing featured members
+  const displayShowroomMembers = useMemo(() => {
+    if (featuredMembers && featuredMembers.length > 0) {
+      const realSlice = featuredMembers.slice(0, 3);
+      if (realSlice.length < 3) {
+        return [...realSlice, ...defaultFallbackMembers.slice(realSlice.length)];
+      }
+      return realSlice;
+    }
+    return defaultFallbackMembers;
+  }, [featuredMembers]);
 
   const openEventDetail = (event) => {
     if (!token) {
@@ -829,7 +890,7 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 8: Digital Showroom (2-Row Title) */}
+        {/* BLOCK 8: Digital Showroom (Doanh nghiệp thành viên thật tiêu biểu, max 3) */}
         <section id="showroom" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -844,43 +905,43 @@ export const Home = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            {[
-              {
-                badge: t('sr1_badge'),
-                status: t('badge_verified'),
-                title: t('sr1_t'),
-                desc: t('sr1_d')
-              },
-              {
-                badge: t('sr2_badge'),
-                status: t('sr2_tag'),
-                title: t('sr2_t'),
-                desc: t('sr2_d')
-              },
-              {
-                badge: t('sr3_badge'),
-                status: t('badge_verified'),
-                title: t('sr3_t'),
-                desc: t('sr3_d')
-              }
-            ].map((item, idx) => (
-              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '600' }}>{item.badge}</span>
-                  <span style={{ fontSize: '11px', color: '#059669', fontWeight: '700' }}>{item.status}</span>
+            {displayShowroomMembers.map((item, idx) => {
+              const isFeatured = item.is_featured === 1;
+              const badgeText = item.badge || item.industry || (item.tier ? `Hội viên ${item.tier}` : 'Doanh nghiệp thành viên');
+              const statusText = isFeatured ? 'Thành viên Nổi bật ⭐' : (item.status || 'Xác thực ✔');
+
+              return (
+                <div key={item.id || idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: isFeatured ? '2px solid #0284c7' : '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: isFeatured ? '0 8px 24px rgba(2, 132, 199, 0.15)' : '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                  {isFeatured && (
+                    <div style={{ position: 'absolute', top: '-11px', right: '16px', backgroundColor: '#0284c7', color: '#ffffff', fontSize: '10.5px', fontWeight: '800', padding: '2px 10px', borderRadius: '10px', boxShadow: '0 2px 6px rgba(2,132,199,0.3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Nổi bật ★
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', marginTop: isFeatured ? '4px' : '0' }}>
+                    <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '700' }}>{badgeText}</span>
+                    <span style={{ fontSize: '11px', color: isFeatured ? '#d97706' : '#059669', fontWeight: '700' }}>{statusText}</span>
+                  </div>
+
+                  <h3 style={{ fontSize: '16.5px', fontWeight: '800', color: '#0c2340', marginBottom: '8px', lineHeight: '1.35' }}>
+                    {item.name || item.title}
+                  </h3>
+
+                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', flex: 1, marginBottom: '1.2rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {item.description || item.desc}
+                  </p>
+
+                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', gap: '8px' }}>
+                    <Link to="/members" style={{ flex: 1, backgroundColor: '#0284c7', color: '#ffffff', textAlign: 'center', borderRadius: '6px', padding: '8px', fontSize: '12px', fontWeight: '700', textDecoration: 'none' }}>
+                      {t('btn_view_profile')}
+                    </Link>
+                    <a href={item.phone ? `tel:${item.phone}` : '/guide'} style={{ flex: 1, backgroundColor: '#f1f5f9', color: '#334155', textAlign: 'center', borderRadius: '6px', padding: '8px', fontSize: '12px', fontWeight: '600', textDecoration: 'none' }}>
+                      {t('btn_contact_now')}
+                    </a>
+                  </div>
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', marginBottom: '8px' }}>{item.title}</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', flex: 1, marginBottom: '1.2rem' }}>{item.desc}</p>
-                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', gap: '8px' }}>
-                  <Link to="/members" style={{ flex: 1, backgroundColor: '#0284c7', color: '#ffffff', textAlign: 'center', borderRadius: '6px', padding: '8px', fontSize: '12px', fontWeight: '700', textDecoration: 'none' }}>
-                    {t('btn_view_profile')}
-                  </Link>
-                  <Link to="/guide" style={{ flex: 1, backgroundColor: '#f1f5f9', color: '#334155', textAlign: 'center', borderRadius: '6px', padding: '8px', fontSize: '12px', fontWeight: '600', textDecoration: 'none' }}>
-                    {t('btn_contact_now')}
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
