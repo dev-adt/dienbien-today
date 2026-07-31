@@ -108,6 +108,31 @@ CREATE TABLE IF NOT EXISTS chat_logs (
   INDEX idx_session (session_id)
 ) ENGINE=InnoDB COMMENT='Lịch sử chat AI';
 
+-- ── Bảng chuyên mục & lĩnh vực ─────────────────────────────────
+CREATE TABLE IF NOT EXISTS categories (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(255) NOT NULL UNIQUE,
+  slug          VARCHAR(255),
+  order_index   INT DEFAULT 0,
+  status        ENUM('active', 'inactive') DEFAULT 'active',
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB COMMENT='Chuyên mục chính';
+
+CREATE TABLE IF NOT EXISTS sub_categories (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  category_id   INT NOT NULL,
+  name          VARCHAR(255) NOT NULL,
+  slug          VARCHAR(255),
+  order_index   INT DEFAULT 0,
+  status        ENUM('active', 'inactive') DEFAULT 'active',
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+  INDEX idx_category (category_id)
+) ENGINE=InnoDB COMMENT='Lĩnh vực con';
+
+
 -- ============================================
 -- DATA MẪU (xoá đi khi dùng thật)
 -- ============================================

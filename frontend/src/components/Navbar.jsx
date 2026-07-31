@@ -10,12 +10,30 @@ export const Navbar = () => {
   const { currentLang, changeLang, t, getLangDetails, LANGS } = useTranslation();
   const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES_DATA);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     document.body.classList.add('public-body');
     document.body.classList.remove('light-theme');
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            setCategoriesList(data.data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic categories in Navbar", err);
+      }
+    };
+    fetchCategories();
   }, []);
 
   const getInitials = (name) => {
@@ -258,8 +276,8 @@ export const Navbar = () => {
             whiteSpace: 'nowrap'
           }}
         >
-          {CATEGORIES_DATA.map((cat) => (
-            <div key={cat.id} className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          {categoriesList.map((cat) => (
+            <div key={cat.id || cat.name} className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               <Link
                 to={`/posts?category=${encodeURIComponent(cat.name)}`}
                 style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
@@ -267,15 +285,18 @@ export const Navbar = () => {
                 {cat.name} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
               </Link>
               <div className="nav-dropdown-menu">
-                {cat.subcategories.map((sub) => (
-                  <Link 
-                    key={sub} 
-                    to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(sub)}`}
-                    className="nav-dropdown-item"
-                  >
-                    {sub}
-                  </Link>
-                ))}
+                {(cat.subcategories || []).map((sub) => {
+                  const subName = typeof sub === 'string' ? sub : sub.name;
+                  return (
+                    <Link 
+                      key={subName} 
+                      to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(subName)}`}
+                      className="nav-dropdown-item"
+                    >
+                      {subName}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -382,8 +403,8 @@ export const Navbar = () => {
             boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
           }}
         >
-          {CATEGORIES_DATA.map((cat) => (
-            <div key={cat.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {categoriesList.map((cat) => (
+            <div key={cat.id || cat.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <Link 
                 to={`/posts?category=${encodeURIComponent(cat.name)}`} 
                 onClick={() => setMobileMenuOpen(false)} 
@@ -392,16 +413,19 @@ export const Navbar = () => {
                 {cat.name}
               </Link>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '12px' }}>
-                {cat.subcategories.map(sub => (
-                  <Link 
-                    key={sub}
-                    to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(sub)}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{ textDecoration: 'none', color: '#475569', fontSize: '12.5px' }}
-                  >
-                    • {sub}
-                  </Link>
-                ))}
+                {(cat.subcategories || []).map((sub) => {
+                  const subName = typeof sub === 'string' ? sub : sub.name;
+                  return (
+                    <Link 
+                      key={subName}
+                      to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(subName)}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      style={{ textDecoration: 'none', color: '#475569', fontSize: '12.5px' }}
+                    >
+                      • {subName}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}

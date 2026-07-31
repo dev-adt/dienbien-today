@@ -155,6 +155,14 @@ export const Sidebar = () => {
       >
         <i className="ti ti-calendar-event"></i> Quản lý sự kiện
       </NavLink>
+
+      <NavLink 
+        to="/admin-categories" 
+        className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
+        style={{ textDecoration: 'none' }}
+      >
+        <i className="ti ti-category"></i> Quản lý Chuyên mục
+      </NavLink>
       
       <NavLink 
         to="/admin-config" 

@@ -54,6 +54,24 @@ export const MemberDashboard = () => {
     image_url: '', featured_requested: 0
   });
   const [creatingPost, setCreatingPost] = useState(false);
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES_DATA);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            setCategoriesList(data.data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic categories in MemberDashboard", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const loadDashboardData = async () => {
     try {
@@ -842,8 +860,8 @@ export const MemberDashboard = () => {
                       required
                     >
                       <option value="">-- Chọn Chuyên mục --</option>
-                      {ALL_CATEGORIES.map(c => (
-                        <option key={c} value={c}>{c}</option>
+                      {categoriesList.map(c => (
+                        <option key={c.id || c.name} value={c.name}>{c.name}</option>
                       ))}
                     </select>
                   </div>
@@ -858,7 +876,7 @@ export const MemberDashboard = () => {
                       required
                     >
                       <option value="">-- Chọn Lĩnh vực --</option>
-                      {getSubcategoriesByCategory(newPostData.category).map(sub => (
+                      {((categoriesList.find(c => c.name === newPostData.category)?.subcategories || []).map(s => typeof s === 'string' ? s : s.name)).map(sub => (
                         <option key={sub} value={sub}>{sub}</option>
                       ))}
                     </select>

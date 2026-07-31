@@ -22,6 +22,7 @@ export const Posts = () => {
   const [selectedType, setSelectedType] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedSubCategory, setSelectedSubCategory] = useState(searchParams.get('sub_category') || '');
+  const [categoriesList, setCategoriesList] = useState(CATEGORIES_DATA);
 
   // Lắng nghe sự thay đổi query params từ URL
   useEffect(() => {
@@ -30,6 +31,23 @@ export const Posts = () => {
     setSelectedCategory(cat);
     setSelectedSubCategory(subCat);
   }, [searchParams]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            setCategoriesList(data.data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic categories in Posts page", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -251,8 +269,8 @@ export const Posts = () => {
               style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '150px' }}
             >
               <option value="">Tất cả chuyên mục</option>
-              {ALL_CATEGORIES.map(catName => (
-                <option key={catName} value={catName}>{catName}</option>
+              {categoriesList.map(cat => (
+                <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>
               ))}
             </select>
 
@@ -263,7 +281,10 @@ export const Posts = () => {
               style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '160px' }}
             >
               <option value="">Tất cả lĩnh vực</option>
-              {(selectedCategory ? getSubcategoriesByCategory(selectedCategory) : CATEGORIES_DATA.flatMap(c => c.subcategories)).map(subName => (
+              {(selectedCategory 
+                ? ((categoriesList.find(c => c.name === selectedCategory)?.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
+                : categoriesList.flatMap(c => (c.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
+              ).map(subName => (
                 <option key={subName} value={subName}>{subName}</option>
               ))}
             </select>
