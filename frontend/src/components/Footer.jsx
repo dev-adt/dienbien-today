@@ -146,21 +146,6 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Disclaimer Banner Box */}
-        <div 
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            marginBottom: '1.5rem',
-            fontSize: '11.5px',
-            color: '#94a3b8',
-            lineHeight: '1.6'
-          }}
-        >
-          <strong style={{ color: '#f87171' }}>📌 {t('footer_disclaimer')}</strong>
-        </div>
 
         {/* Bottom Rights & Links Row */}
         <div 
