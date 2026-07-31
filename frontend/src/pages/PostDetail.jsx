@@ -281,6 +281,33 @@ export const PostDetail = () => {
                   {t('date_posted_label')}: <strong style={{ color: 'var(--text-primary)' }}>{dateStr}</strong>
                 </div>
 
+                {/* Source URL (Nguồn bài viết / Link gốc) */}
+                {post.source_url && (
+                  <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--border)' }}>
+                    <a
+                      href={post.source_url.startsWith('http') ? post.source_url : `https://${post.source_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '12.5px',
+                        color: '#0284c7',
+                        background: 'rgba(2, 132, 199, 0.08)',
+                        border: '1px solid rgba(2, 132, 199, 0.2)',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        wordBreak: 'break-all'
+                      }}
+                    >
+                      <i className="ti ti-external-link"></i> {currentLang === 'en' ? 'Article Source:' : 'Nguồn bài viết:'} {post.source_url}
+                    </a>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{t('translate_select_lang')}:</span>
@@ -343,7 +370,18 @@ export const PostDetail = () => {
               <div className="glass-card" style={{ padding: '30px 24px' }}>
                 <div 
                   className="post-html-body"
-                  dangerouslySetInnerHTML={{ __html: isTranslated ? translatedBody : post.body }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: (() => {
+                      let raw = isTranslated ? translatedBody : post.body;
+                      if (!raw) return '';
+                      if (raw.includes('&lt;iframe') || raw.includes('&lt;div')) {
+                        const txt = document.createElement('textarea');
+                        txt.innerHTML = raw;
+                        raw = txt.value;
+                      }
+                      return raw;
+                    })()
+                  }}
                   style={{
                     fontSize: '15px',
                     color: 'var(--text-secondary)',
@@ -351,6 +389,16 @@ export const PostDetail = () => {
                     textAlign: 'left',
                   }}
                 />
+                <style>{`
+                  .post-html-body iframe {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-height: 380px;
+                    border-radius: 8px;
+                    border: none;
+                    margin: 15px 0;
+                  }
+                `}</style>
               </div>
 
             </div>

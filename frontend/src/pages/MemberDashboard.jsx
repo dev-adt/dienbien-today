@@ -50,7 +50,7 @@ export const MemberDashboard = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
     title: '', summary: '', body: '', type: 'Tìm kiếm đối tác',
-    category: '', sub_category: '', tags: '', contact_info: '', deadline: '',
+    category: '', sub_category: '', source_url: '', tags: '', contact_info: '', deadline: '',
     image_url: '', featured_requested: 0
   });
   const [creatingPost, setCreatingPost] = useState(false);
@@ -303,6 +303,7 @@ export const MemberDashboard = () => {
             type: p.type || t('type_find_partner'),
             category: p.category || '',
             sub_category: p.sub_category || '',
+            source_url: p.source_url || '',
             tags: parsedTags,
             contact_info: p.contact_info || '',
             deadline: formattedDeadline,
@@ -374,7 +375,7 @@ export const MemberDashboard = () => {
       setEditingPostId(null);
       setNewPostData({
         title: '', summary: '', body: '', type: t('type_find_partner'),
-        category: '', sub_category: '', tags: '', contact_info: '', deadline: '', image_url: '',
+        category: '', sub_category: '', source_url: '', tags: '', contact_info: '', deadline: '', image_url: '',
         featured_requested: 0
       });
       loadDashboardData();
@@ -903,6 +904,17 @@ export const MemberDashboard = () => {
                 <div className="fg">
                   <label>{t('modal_post_summary_label')}</label>
                   <input type="text" id="summary" value={newPostData.summary} onChange={handleNewPostChange} placeholder={t('modal_post_summary_placeholder')} />
+                </div>
+
+                <div className="fg">
+                  <label>Nguồn bài viết / Link tham khảo (URL)</label>
+                  <input 
+                    type="url" 
+                    id="source_url" 
+                    value={newPostData.source_url} 
+                    onChange={handleNewPostChange} 
+                    placeholder="Ví dụ: https://baohaiphong.vn/... (Nếu có, bấm vào sẽ nhảy tới link gốc)" 
+                  />
                 </div>
 
                 <div className="fg">

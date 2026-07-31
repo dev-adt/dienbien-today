@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS posts (
   type          VARCHAR(100) COMMENT 'Loại bài (Tìm đối tác, Sự kiện...)',
   category      VARCHAR(100) COMMENT 'Chuyên mục lớn',
   sub_category  VARCHAR(100) COMMENT 'Lĩnh vực con',
+  source_url    VARCHAR(500) COMMENT 'Nguồn bài viết / Link gốc',
   tags          TEXT         COMMENT 'Từ khoá (JSON array)',
   contact_info  VARCHAR(255) COMMENT 'Thông tin liên hệ',
   deadline      DATE         COMMENT 'Hạn liên hệ',

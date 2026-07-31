@@ -136,6 +136,13 @@ db.query(`
       console.log('✅ Đã thêm cột sub_category vào bảng posts');
     }
 
+    // Thêm cột source_url vào bảng posts để lưu nguồn bài viết
+    const [sourceUrlCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'source_url'");
+    if (!sourceUrlCols.length) {
+      await db.query("ALTER TABLE posts ADD COLUMN source_url VARCHAR(500) DEFAULT NULL AFTER sub_category");
+      console.log('✅ Đã thêm cột source_url vào bảng posts');
+    }
+
     // Thêm cột featured_requested vào bảng posts để Platinum yêu cầu ghim bài nổi bật
     const [featuredRequestedCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'featured_requested'");
     if (!featuredRequestedCols.length) {
@@ -1453,7 +1460,7 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
       }
     }
 
-    const { title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
+    const { title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
     if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
     if (!category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Chuyên mục cho bài viết.' });
     if (!sub_category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Lĩnh vực cho bài viết.' });
@@ -1465,9 +1472,9 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
     const finalStatus = isDraft ? 'draft' : 'pending';
 
     const [result] = await db.query(
-      `INSERT INTO posts (member_id, title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, status, featured_requested)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [req.member.id, title, summary, body, type, category, sub_category, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
+      `INSERT INTO posts (member_id, title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.member.id, title, summary, body, type, category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
     );
     res.json({ success: true, id: result.insertId, message: isDraft ? 'Đã lưu bản nháp.' : 'Bài viết đã gửi để admin duyệt.' });
   } catch (err) {
@@ -1509,7 +1516,7 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Bạn không có quyền chỉnh sửa bài đăng này.' });
     }
 
-    const { title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
+    const { title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
     if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
     if (!category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Chuyên mục cho bài viết.' });
     if (!sub_category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Lĩnh vực cho bài viết.' });
@@ -1523,12 +1530,12 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
 
     await db.query(
       `UPDATE posts SET 
-        title = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?,
+        title = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?, source_url = ?,
         tags = ?, contact_info = ?, deadline = ?, image_url = ?, status = ?,
         featured_requested = ?
        WHERE id = ?`,
       [
-        title, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', sub_category || '',
+        title, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', sub_category || '', source_url || null,
         JSON.stringify(tags || []), contact_info || '', deadline || null, image_url || null, 
         finalStatus, isFeaturedRequested, postId
       ]
