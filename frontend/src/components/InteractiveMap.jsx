@@ -141,7 +141,7 @@ const LOCATION_DATA = [
     lat: 20.7095,
     lng: 106.7915,
     address: 'Chân núi Độc, Phường Ngọc Xuyên, Đồ Sơn',
-    desc: 'Ngôi đền linh thiêng bậc nhất Hải Phòng thờ Đông Hải Trại Bà Đào Thị Hương, măt hướng ra biển rộng bao la.',
+    desc: 'Ngôi đền linh thiêng bậc nhất Hải Phòng thờ Đông Hải Trại Bà Đào Thị Hương, mặt hướng ra biển rộng bao la.',
     tags: ['Đền linh thiêng', 'Tâm linh Đồ Sơn', 'Núi Độc'],
     rating: 4.8,
     phone: 'Đang cập nhật',
@@ -306,6 +306,7 @@ export default function InteractiveMap() {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersMapRef = useRef(new Map());
+  const sliderRef = useRef(null);
 
   // Filtered locations calculation
   const filteredLocations = useMemo(() => {
@@ -357,6 +358,13 @@ export default function InteractiveMap() {
     }, 200);
     return () => clearTimeout(timer);
   }, [isFullscreen]);
+
+  // Reset slider position when filter changes
+  useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [filteredLocations]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -441,7 +449,7 @@ export default function InteractiveMap() {
     markersMapRef.current.clear();
 
     // Create custom pins for each location
-    filteredLocations.forEach((loc) => {
+    filteredLocations.forEach((loc, index) => {
       const meta = CATEGORY_META[loc.category] || CATEGORY_META.all;
 
       // Custom HTML DivIcon Pin
@@ -464,9 +472,11 @@ export default function InteractiveMap() {
           ">
             <span style="
               transform: rotate(45deg);
-              font-size: 15px;
+              font-size: 14px;
+              font-weight: 800;
+              color: #ffffff;
               line-height: 1;
-            ">${meta.icon}</span>
+            ">#${index + 1}</span>
           </div>
         `,
         iconSize: [34, 34],
@@ -498,7 +508,7 @@ export default function InteractiveMap() {
           </div>
 
           <h3 style="font-size: 15px; font-weight: 800; color: #0c2340; margin: 0 0 6px 0; line-height: 1.35;">
-            ${loc.name}
+            #${index + 1}. ${loc.name}
           </h3>
 
           <p style="font-size: 12px; color: #475569; margin: 0 0 8px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
@@ -550,6 +560,9 @@ export default function InteractiveMap() {
 
       marker.on('click', () => {
         setSelectedLocId(loc.id);
+        if (sliderRef.current && sliderRef.current.children[index]) {
+          sliderRef.current.children[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       });
 
       markersMapRef.current.set(loc.id, marker);
@@ -622,6 +635,22 @@ export default function InteractiveMap() {
         marker.openPopup();
       }
     }
+  };
+
+  // Scroll Slider horizontally
+  const scrollSlider = (direction) => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  // Jump to specific card by index
+  const jumpToCard = (idx, loc) => {
+    if (sliderRef.current && sliderRef.current.children[idx]) {
+      sliderRef.current.children[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    handleSelectCard(loc);
   };
 
   return (
@@ -748,7 +777,6 @@ export default function InteractiveMap() {
               fontSize: '14px',
               outline: 'none',
               backgroundColor: '#f8fafc',
-              boxSizing: 'border-[#0284c7]',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
               transition: 'all 0.2s ease'
             }}
@@ -841,8 +869,8 @@ export default function InteractiveMap() {
         ref={mapContainerRef} 
         style={{ 
           width: '100%', 
-          height: isFullscreen ? 'calc(100vh - 380px)' : '460px', 
-          minHeight: isFullscreen ? '350px' : '420px',
+          height: isFullscreen ? 'calc(100vh - 430px)' : '420px', 
+          minHeight: isFullscreen ? '300px' : '380px',
           borderRadius: '16px', 
           overflow: 'hidden', 
           border: '1px solid #cbd5e1', 
@@ -851,28 +879,117 @@ export default function InteractiveMap() {
         }}
       />
 
-      {/* LOCATION CARDS GRID / LIST BELOW MAP */}
-      <div style={{ marginTop: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0c2340', margin: 0 }}>
-            Danh sách địa điểm ({filteredLocations.length})
-          </h3>
-          {filteredLocations.length === 0 && (
-            <span style={{ fontSize: '13px', color: '#ef4444', fontWeight: '600' }}>
-              Không tìm thấy địa điểm phù hợp từ khóa "{searchQuery}"
+      {/* LOCATION SLIDER SECTION (1 SINGLE ROW WITH SLIDE ARROWS & INDEX NUMBERS) */}
+      <div style={{ marginTop: '1.2rem' }}>
+        {/* Slider Header Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0c2340', margin: 0 }}>
+              Danh sách địa điểm ({filteredLocations.length})
+            </h3>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              • Dạng slide 1 hàng (Lướt xem nhanh)
             </span>
+          </div>
+
+          {/* Slider Prev / Next Controls */}
+          {filteredLocations.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                onClick={() => scrollSlider('left')}
+                title="Lướt sang trái"
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '8px',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#334155',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
+                }}
+              >
+                ◀
+              </button>
+              <button
+                onClick={() => scrollSlider('right')}
+                title="Lướt sang phải"
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '8px',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#334155',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
+                }}
+              >
+                ▶
+              </button>
+            </div>
           )}
         </div>
 
-        {filteredLocations.length > 0 ? (
+        {/* Quick Index Jump Pills (#1, #2, #3...) */}
+        {filteredLocations.length > 0 && (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '16px',
-            maxHeight: isFullscreen ? '220px' : 'none',
-            overflowY: isFullscreen ? 'auto' : 'visible'
+            display: 'flex',
+            gap: '6px',
+            overflowX: 'auto',
+            paddingBottom: '8px',
+            marginBottom: '8px',
+            scrollbarWidth: 'none'
           }}>
-            {filteredLocations.map((loc) => {
+            {filteredLocations.map((loc, idx) => {
+              const isSelected = selectedLocId === loc.id;
+              return (
+                <button
+                  key={`pill_${loc.id}`}
+                  onClick={() => jumpToCard(idx, loc)}
+                  style={{
+                    backgroundColor: isSelected ? '#0284c7' : '#f1f5f9',
+                    color: isSelected ? '#ffffff' : '#475569',
+                    border: isSelected ? 'none' : '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '3px 9px',
+                    fontSize: '11.5px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  #{idx + 1}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Horizontal Slider (Single Row) */}
+        {filteredLocations.length > 0 ? (
+          <div
+            ref={sliderRef}
+            style={{
+              display: 'flex',
+              gap: '16px',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              scrollBehavior: 'smooth',
+              padding: '8px 2px 14px 2px',
+              scrollbarWidth: 'thin'
+            }}
+          >
+            {filteredLocations.map((loc, index) => {
               const meta = CATEGORY_META[loc.category] || CATEGORY_META.all;
               const isSelected = selectedLocId === loc.id;
 
@@ -881,32 +998,55 @@ export default function InteractiveMap() {
                   key={loc.id}
                   onClick={() => handleSelectCard(loc)}
                   style={{
+                    minWidth: '290px',
+                    maxWidth: '290px',
+                    flexShrink: 0,
+                    scrollSnapAlign: 'start',
                     backgroundColor: '#ffffff',
                     border: isSelected ? `2px solid ${meta.color}` : '1px solid #e2e8f0',
-                    borderRadius: '14px',
-                    padding: '1rem',
+                    borderRadius: '16px',
+                    padding: '1.2rem 1.1rem 1.1rem 1.1rem',
                     cursor: 'pointer',
-                    boxShadow: isSelected ? `0 6px 16px ${meta.color}25` : '0 2px 6px rgba(0,0,0,0.03)',
+                    boxShadow: isSelected ? `0 8px 24px ${meta.color}30` : '0 2px 8px rgba(0,0,0,0.04)',
                     transition: 'all 0.2s ease',
                     display: 'flex',
                     flexDirection: 'column',
-                    justify: 'space-between'
+                    justifyContent: 'space-between',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 6px 14px rgba(0,0,0,0.08)';
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected) {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.03)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
                     }
                   }}
                 >
+                  {/* Stylized Index Badge (#01, #02...) */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-10px',
+                    left: '14px',
+                    backgroundColor: isSelected ? meta.color : '#0c2340',
+                    color: '#ffffff',
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    letterSpacing: '0.03em'
+                  }}>
+                    #{String(index + 1).padStart(2, '0')}
+                  </div>
+
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    {/* Category & Rating */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '2px' }}>
                       <span style={{
                         backgroundColor: `${meta.color}15`,
                         color: meta.color,
@@ -922,23 +1062,28 @@ export default function InteractiveMap() {
                       </span>
                     </div>
 
-                    <h4 style={{ fontSize: '15px', fontWeight: '800', color: '#0c2340', margin: '0 0 6px 0', lineHeight: '1.3' }}>
+                    {/* Location Name */}
+                    <h4 style={{ fontSize: '14.5px', fontWeight: '800', color: '#0c2340', margin: '0 0 6px 0', lineHeight: '1.35', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {loc.name}
                     </h4>
 
-                    <p style={{ fontSize: '12.5px', color: '#475569', margin: '0 0 10px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {/* Short Description */}
+                    <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 10px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {loc.desc}
                     </p>
                   </div>
 
                   <div>
-                    <div style={{ fontSize: '11.5px', color: '#64748b', marginBottom: '10px' }}>
-                      📍 {loc.address}
+                    {/* Address */}
+                    <div style={{ fontSize: '11.5px', color: '#64748b', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>📍</span>
+                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{loc.address}</span>
                     </div>
 
+                    {/* Bottom Actions */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                       <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '700' }}>
-                        🎯 Click để định vị
+                        🎯 Định vị bản đồ
                       </span>
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`}
@@ -946,7 +1091,7 @@ export default function InteractiveMap() {
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         style={{
-                          fontSize: '11.5px',
+                          fontSize: '11px',
                           color: '#ffffff',
                           backgroundColor: '#0284c7',
                           padding: '4px 10px',
