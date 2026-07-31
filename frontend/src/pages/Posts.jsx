@@ -293,15 +293,15 @@ export const Posts = () => {
 
           </div>
 
-          {/* Row 2: Hội viên, Loại bài, Reset button & Stats */}
+          {/* Row 2: Single horizontal line for Tier, Type, Reset & Stats */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
             
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {/* Filter by Tier */}
               <select
                 value={selectedTier}
                 onChange={(e) => setSelectedTier(e.target.value)}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '130px' }}
+                style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', maxWidth: '150px' }}
               >
                 <option value="">👑 {t('all_members')}</option>
                 <option value="Platinum">{t('tier_platinum_members')}</option>
@@ -313,7 +313,7 @@ export const Posts = () => {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '130px' }}
+                style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', maxWidth: '150px' }}
               >
                 <option value="">📌 {t('all_types')}</option>
                 <option value="offer">{t('type_offer')}</option>
@@ -337,23 +337,24 @@ export const Posts = () => {
                     color: '#EF4444',
                     border: '1px solid rgba(239,68,68,0.2)',
                     fontSize: '11.5px',
-                    padding: '5px 10px',
+                    padding: '4px 8px',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  <i className="ti ti-rotate-clockwise"></i> Xóa lọc
+                  <i className="ti ti-rotate-clockwise"></i> {currentLang === 'en' ? 'Reset' : 'Xóa lọc'}
                 </button>
               )}
             </div>
 
             {/* Stats & Per Page */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span>{t('label_show')}:</span>
                 <select
                   value={postsPerPage}
