@@ -242,19 +242,21 @@ export const Posts = () => {
           </div>
         )}
 
-        {/* 2. FILTER BAR */}
-        <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* 2. FILTER BAR (NEAT & COMPACT RE-LAYOUT) */}
+        <div className="glass-card" style={{ padding: '1rem 1.25rem', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', flex: 1, minWidth: '280px' }}>
+          {/* Row 1: Search, Chuyên mục, Lĩnh vực */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', width: '100%' }}>
+            
             {/* Search Input */}
-            <div style={{ position: 'relative', width: '240px' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'var(--text-muted)' }}></i>
               <input 
                 type="text" 
                 placeholder={t('search_posts_placeholder')} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ padding: '8px 12px 8px 30px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)' }}
+                style={{ padding: '7px 12px 7px 30px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
               />
             </div>
 
@@ -264,11 +266,11 @@ export const Posts = () => {
               onChange={(e) => {
                 const cat = e.target.value;
                 setSelectedCategory(cat);
-                setSelectedSubCategory(''); // Reset Lĩnh vực khi đổi Chuyên mục
+                setSelectedSubCategory('');
               }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '150px' }}
+              style={{ padding: '7px 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', boxSizing: 'border-box' }}
             >
-              <option value="">Tất cả chuyên mục</option>
+              <option value="">📁 Tất cả chuyên mục</option>
               {categoriesList.map(cat => (
                 <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>
               ))}
@@ -278,9 +280,9 @@ export const Posts = () => {
             <select
               value={selectedSubCategory}
               onChange={(e) => setSelectedSubCategory(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '160px' }}
+              style={{ padding: '7px 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', boxSizing: 'border-box' }}
             >
-              <option value="">Tất cả lĩnh vực</option>
+              <option value="">🏷️ Tất cả lĩnh vực</option>
               {(selectedCategory 
                 ? ((categoriesList.find(c => c.name === selectedCategory)?.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
                 : categoriesList.flatMap(c => (c.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
@@ -289,60 +291,102 @@ export const Posts = () => {
               ))}
             </select>
 
-            {/* Filter by Tier */}
-            <select
-              value={selectedTier}
-              onChange={(e) => setSelectedTier(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '130px' }}
-            >
-              <option value="">{t('all_members')}</option>
-              <option value="Platinum">{t('tier_platinum_members')}</option>
-              <option value="Gold">{t('tier_gold_members')}</option>
-              <option value="Silver">{t('tier_silver_members')}</option>
-            </select>
-
-            {/* Filter by Type */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '140px' }}
-            >
-              <option value="">{t('all_types')}</option>
-              <option value="offer">{t('type_offer')}</option>
-              <option value="demand">{t('type_demand')}</option>
-              <option value="cooperate">{t('type_cooperate')}</option>
-            </select>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <span>{t('label_show')}:</span>
+          {/* Row 2: Hội viên, Loại bài, Reset button & Stats */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              {/* Filter by Tier */}
               <select
-                value={postsPerPage}
-                onChange={(e) => {
-                  setPostsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'var(--surface-3)',
-                  color: '#fff',
-                  fontSize: '11.5px',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(e.target.value)}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '130px' }}
               >
-                <option value="5">{t('posts_per_page')(5)}</option>
-                <option value="10">{t('posts_per_page')(10)}</option>
-                <option value="25">{t('posts_per_page')(25)}</option>
+                <option value="">👑 {t('all_members')}</option>
+                <option value="Platinum">{t('tier_platinum_members')}</option>
+                <option value="Gold">{t('tier_gold_members')}</option>
+                <option value="Silver">{t('tier_silver_members')}</option>
               </select>
+
+              {/* Filter by Type */}
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-strong)', fontSize: '12px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '130px' }}
+              >
+                <option value="">📌 {t('all_types')}</option>
+                <option value="offer">{t('type_offer')}</option>
+                <option value="demand">{t('type_demand')}</option>
+                <option value="cooperate">{t('type_cooperate')}</option>
+              </select>
+
+              {/* Reset filter button */}
+              {(searchQuery || selectedTier || selectedType || selectedCategory || selectedSubCategory) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedTier('');
+                    setSelectedType('');
+                    setSelectedCategory('');
+                    setSelectedSubCategory('');
+                    setSearchParams({});
+                  }}
+                  style={{
+                    background: 'rgba(239,68,68,0.1)',
+                    color: '#EF4444',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    fontSize: '11.5px',
+                    padding: '5px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: 600
+                  }}
+                >
+                  <i className="ti ti-rotate-clockwise"></i> Xóa lọc
+                </button>
+              )}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              {t('found_posts')(sortedPosts.length)}
+
+            {/* Stats & Per Page */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span>{t('label_show')}:</span>
+                <select
+                  value={postsPerPage}
+                  onChange={(e) => {
+                    setPostsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '3px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-3)',
+                    color: 'var(--text-primary)',
+                    fontSize: '11.5px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                </select>
+              </div>
+
+              <span>|</span>
+
+              <span style={{ fontWeight: 600, color: 'var(--primary-light)' }}>
+                {t('found_posts')(sortedPosts.length)}
+              </span>
             </div>
+
           </div>
+
         </div>
 
         {/* 3. POSTS DIRECTORY LIST */}
