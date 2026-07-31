@@ -273,9 +273,10 @@ export const AIChat = () => {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
       
-      // Inline formatting (bold)
+      // Inline formatting (bold & markdown links)
       trimmed = trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       trimmed = trimmed.replace(/__(.*?)__/g, '<strong>$1</strong>');
+      trimmed = trimmed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #0284c7; font-weight: 700; text-decoration: underline;" target="_self">$1</a>');
       
       // Headings
       if (trimmed.startsWith('### ')) {
