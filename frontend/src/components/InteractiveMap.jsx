@@ -8,8 +8,8 @@ const LOCATION_DATA = [
     id: 'loc_1',
     name: 'Khu du lịch Quốc tế Đồi Rồng (Dragon Ocean)',
     category: 'stay',
-    lat: 20.6950,
-    lng: 106.7720,
+    lat: 20.6868,
+    lng: 106.7785,
     address: 'Phường Vạn Hương, Quận Đồ Sơn, Hải Phòng',
     desc: 'Siêu quần thể du lịch nghỉ dưỡng 5 sao, bãi tắm nhân tạo lọc nước biển trong xanh & công viên nước Legend Park hiện đại.',
     tags: ['Resort 5 sao', 'Bãi tắm lọc nước', 'Công viên nước', 'Nghỉ dưỡng'],
@@ -21,8 +21,8 @@ const LOCATION_DATA = [
     id: 'loc_2',
     name: 'Dream Dragon Resort Đồ Sơn',
     category: 'stay',
-    lat: 20.6925,
-    lng: 106.7755,
+    lat: 20.6885,
+    lng: 106.7742,
     address: 'Khu du lịch Đồi Rồng, Phường Vạn Hương, Đồ Sơn',
     desc: 'Khách sạn nghỉ dưỡng 5 sao ven biển cao cấp với hơn 300 phòng nghỉ sang trọng, hồ bơi vô cực ngắm hoàng hôn.',
     tags: ['Khách sạn 5 sao', 'Hồ bơi vô cực', 'View biển', 'Spa'],
@@ -60,7 +60,7 @@ const LOCATION_DATA = [
     id: 'loc_5',
     name: 'Bãi tắm Khu 1 Đồ Sơn',
     category: 'attractions',
-    lat: 20.7128,
+    lat: 20.7105,
     lng: 106.7845,
     address: 'Khu 1, Phường Hải Sơn, Quận Đồ Sơn',
     desc: 'Bãi tắm cửa ngõ vào Đồ Sơn, tập trung nhiều nhà hàng hải sản lâu đời, bờ kè ven biển đẹp rực rỡ buổi chiều.',
@@ -298,6 +298,7 @@ export default function InteractiveMap() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapCategory, setMapCategory] = useState('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedLocId, setSelectedLocId] = useState(null);
   const [userGps, setUserGps] = useState(null);
   const [locatingGps, setLocatingGps] = useState(false);
@@ -307,6 +308,12 @@ export default function InteractiveMap() {
   const mapInstanceRef = useRef(null);
   const markersMapRef = useRef(new Map());
   const sliderRef = useRef(null);
+
+  // Helper to build accurate Google Maps Directions URL (uses official business POI & address)
+  const getGoogleMapsDirUrl = (loc) => {
+    const destinationQuery = `${loc.name}, ${loc.address}`;
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinationQuery)}`;
+  };
 
   // Filtered locations calculation
   const filteredLocations = useMemo(() => {
@@ -357,7 +364,7 @@ export default function InteractiveMap() {
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [isFullscreen]);
+  }, [isFullscreen, sidebarOpen]);
 
   // Reset slider position when filter changes
   useEffect(() => {
@@ -487,7 +494,7 @@ export default function InteractiveMap() {
       const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
 
       // Custom Rich Popup Content
-      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+      const googleMapsDirUrl = getGoogleMapsDirUrl(loc);
       const popupHtml = `
         <div style="font-family: system-ui, -apple-system, sans-serif; width: 270px; padding: 4px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
@@ -525,7 +532,7 @@ export default function InteractiveMap() {
           </div>
 
           <div style="display: flex; gap: 6px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
-            <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" style="
+            <a href="${googleMapsDirUrl}" target="_blank" rel="noopener noreferrer" style="
               flex: 1;
               background-color: #0284c7;
               color: #ffffff;
@@ -653,22 +660,354 @@ export default function InteractiveMap() {
     handleSelectCard(loc);
   };
 
+  // Toggle Fullscreen Mode
+  const toggleFullscreen = () => {
+    const nextState = !isFullscreen;
+    setIsFullscreen(nextState);
+    if (nextState) {
+      setSidebarOpen(true);
+    }
+  };
+
+  // ==========================================
+  // FULLSCREEN GOOGLE MAPS STYLE LAYOUT
+  // ==========================================
+  if (isFullscreen) {
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 99999,
+          backgroundColor: '#0f172a',
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden'
+        }}
+      >
+        {/* LEAFLET MAP CANVAS (TAKEOVER 100% VIEWPORT) */}
+        <div 
+          ref={mapContainerRef} 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            backgroundColor: '#cbd5e1'
+          }}
+        />
+
+        {/* FLOATING ACTION BAR (TOP RIGHT) */}
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          zIndex: 1000,
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center'
+        }}>
+          <button 
+            onClick={handleLocateGps}
+            disabled={locatingGps}
+            style={{ 
+              backgroundColor: '#ffffff', 
+              color: '#334155',
+              border: '1px solid #cbd5e1', 
+              borderRadius: '10px', 
+              padding: '10px 16px', 
+              fontSize: '13px', 
+              fontWeight: '700', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
+            }}
+          >
+            📍 {locatingGps ? 'Đang định vị...' : t('map_gps_btn')}
+          </button>
+
+          <button 
+            onClick={() => navigate('/ai-chat')}
+            style={{ 
+              backgroundColor: '#0284c7', 
+              color: '#ffffff', 
+              border: 'none', 
+              borderRadius: '10px', 
+              padding: '10px 16px', 
+              fontSize: '13px', 
+              fontWeight: '700', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)'
+            }}
+          >
+            🤖 {t('map_ask_ai_btn')}
+          </button>
+
+          <button 
+            onClick={toggleFullscreen}
+            style={{ 
+              backgroundColor: '#0c2340', 
+              color: '#ffffff', 
+              border: 'none', 
+              borderRadius: '10px', 
+              padding: '10px 16px', 
+              fontSize: '13px', 
+              fontWeight: '700', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
+            }}
+          >
+            ✕ Thu nhỏ (ESC)
+          </button>
+        </div>
+
+        {/* FLOATING TOGGLE BUTTON IF SIDEBAR COLLAPSED */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              left: '16px',
+              zIndex: 1000,
+              backgroundColor: '#ffffff',
+              color: '#0c2340',
+              border: '1px solid #cbd5e1',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              fontSize: '13px',
+              fontWeight: '800',
+              cursor: 'pointer',
+              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>▶ Danh sách địa điểm</span>
+            <span style={{ backgroundColor: '#0284c7', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '10px' }}>
+              {filteredLocations.length}
+            </span>
+          </button>
+        )}
+
+        {/* FLOATING GOOGLE MAPS STYLE LEFT SIDEBAR PANEL */}
+        {sidebarOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            bottom: '16px',
+            width: '360px',
+            maxWidth: 'calc(100vw - 32px)',
+            zIndex: 1000,
+            backgroundColor: 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '18px',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(226, 232, 240, 0.8)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease'
+          }}>
+            {/* Sidebar Header: Search & Close Button */}
+            <div style={{ padding: '14px 14px 10px 14px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: '#0284c7', textTransform: 'uppercase' }}>
+                  🗺️ BẢN ĐỒ ĐỒ SƠN ({filteredLocations.length})
+                </span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  title="Ẩn thanh bên"
+                  style={{
+                    background: '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '4px 8px',
+                    fontSize: '11.5px',
+                    fontWeight: '700',
+                    color: '#475569',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ◀ Ẩn danh sách
+                </button>
+              </div>
+
+              {/* Search Box */}
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="🔍 Tìm kiếm địa điểm, bãi tắm, resort..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 36px 10px 36px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#94a3b8' }}>
+                  🔍
+                </span>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: '#e2e8f0',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      color: '#475569'
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter Pills inside Sidebar */}
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '10px', scrollbarWidth: 'none' }}>
+                {Object.keys(CATEGORY_META).map((cat) => {
+                  const isSelected = mapCategory === cat;
+                  const meta = CATEGORY_META[cat];
+
+                  return (
+                    <button
+                      key={`side_${cat}`}
+                      onClick={() => setMapCategory(cat)}
+                      style={{
+                        backgroundColor: isSelected ? meta.color : '#f1f5f9',
+                        color: isSelected ? '#ffffff' : '#334155',
+                        border: 'none',
+                        borderRadius: '14px',
+                        padding: '5px 11px',
+                        fontSize: '11.5px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {meta.icon} {t(`map_filter_${cat}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sidebar Scrollable Vertical Places List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredLocations.length > 0 ? (
+                filteredLocations.map((loc, index) => {
+                  const meta = CATEGORY_META[loc.category] || CATEGORY_META.all;
+                  const isSelected = selectedLocId === loc.id;
+                  const googleMapsDirUrl = getGoogleMapsDirUrl(loc);
+
+                  return (
+                    <div
+                      key={`side_card_${loc.id}`}
+                      onClick={() => handleSelectCard(loc)}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: isSelected ? `2px solid ${meta.color}` : '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                        boxShadow: isSelected ? `0 4px 14px ${meta.color}25` : '0 2px 4px rgba(0,0,0,0.03)',
+                        transition: 'all 0.15s ease',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '800', color: meta.color }}>
+                          #{String(index + 1).padStart(2, '0')} • {meta.icon} {meta.label}
+                        </span>
+                        <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#d97706' }}>
+                          ★ {loc.rating}
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: '13.5px', fontWeight: '800', color: '#0c2340', margin: '0 0 4px 0', lineHeight: '1.3' }}>
+                        {loc.name}
+                      </h4>
+
+                      <p style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 8px 0', lineHeight: '1.35', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {loc.desc}
+                      </p>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '11px', color: '#64748b' }}>
+                          📍 {loc.address.split(',')[0]}
+                        </span>
+                        <a
+                          href={googleMapsDirUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            fontSize: '10.5px',
+                            color: '#ffffff',
+                            backgroundColor: '#0284c7',
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            textDecoration: 'none',
+                            fontWeight: '700'
+                          }}
+                        >
+                          Chỉ đường
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b', fontSize: '13px' }}>
+                  Không tìm thấy địa điểm nào.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==========================================
+  // STANDARD INLINE MAP LAYOUT (PAGE VIEW)
+  // ==========================================
   return (
     <div 
-      className={isFullscreen ? 'fullscreen-map-wrapper' : 'standard-map-wrapper'}
+      className="standard-map-wrapper"
       style={{
-        position: isFullscreen ? 'fixed' : 'relative',
-        inset: isFullscreen ? 0 : 'auto',
-        zIndex: isFullscreen ? 99999 : 1,
+        position: 'relative',
         backgroundColor: '#ffffff',
-        borderRadius: isFullscreen ? '0' : '20px',
-        border: isFullscreen ? 'none' : '1px solid #e2e8f0',
-        padding: isFullscreen ? '1.5rem' : '1.5rem',
-        boxShadow: isFullscreen ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
+        borderRadius: '20px',
+        border: '1px solid #e2e8f0',
+        padding: '1.5rem',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
         display: 'flex',
-        flexDirection: 'column',
-        height: isFullscreen ? '100vh' : 'auto',
-        overflowY: isFullscreen ? 'auto' : 'visible'
+        flexDirection: 'column'
       }}
     >
       {/* MAP HEADER */}
@@ -683,7 +1022,7 @@ export default function InteractiveMap() {
             </span>
           </div>
           <h2 style={{
-            fontSize: isFullscreen ? '26px' : '22px',
+            fontSize: '22px',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #0c2340 0%, #0284c7 100%)',
             WebkitBackgroundClip: 'text',
@@ -718,10 +1057,10 @@ export default function InteractiveMap() {
           </button>
 
           <button 
-            onClick={() => setIsFullscreen(!isFullscreen)}
+            onClick={toggleFullscreen}
             style={{ 
-              backgroundColor: isFullscreen ? '#0284c7' : '#f0f9ff', 
-              color: isFullscreen ? '#ffffff' : '#0284c7',
+              backgroundColor: '#f0f9ff', 
+              color: '#0284c7',
               border: '1px solid #bae6fd', 
               borderRadius: '10px', 
               padding: '8px 14px', 
@@ -731,11 +1070,10 @@ export default function InteractiveMap() {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              transition: 'all 0.2s',
-              boxShadow: isFullscreen ? '0 2px 8px rgba(2,132,199,0.3)' : 'none'
+              transition: 'all 0.2s'
             }}
           >
-            {isFullscreen ? '✕ Thu nhỏ' : '⛶ ' + t('map_fullscreen_btn')}
+            ⛶ {t('map_fullscreen_btn')} (Chuyên nghiệp)
           </button>
 
           <button 
@@ -869,8 +1207,7 @@ export default function InteractiveMap() {
         ref={mapContainerRef} 
         style={{ 
           width: '100%', 
-          height: isFullscreen ? 'calc(100vh - 430px)' : '420px', 
-          minHeight: isFullscreen ? '300px' : '380px',
+          height: '420px',
           borderRadius: '16px', 
           overflow: 'hidden', 
           border: '1px solid #cbd5e1', 
@@ -992,6 +1329,7 @@ export default function InteractiveMap() {
             {filteredLocations.map((loc, index) => {
               const meta = CATEGORY_META[loc.category] || CATEGORY_META.all;
               const isSelected = selectedLocId === loc.id;
+              const googleMapsDirUrl = getGoogleMapsDirUrl(loc);
 
               return (
                 <div
@@ -1011,7 +1349,7 @@ export default function InteractiveMap() {
                     transition: 'all 0.2s ease',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between',
+                    justify: 'space-between',
                     position: 'relative'
                   }}
                   onMouseEnter={(e) => {
@@ -1086,7 +1424,7 @@ export default function InteractiveMap() {
                         🎯 Định vị bản đồ
                       </span>
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`}
+                        href={googleMapsDirUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
