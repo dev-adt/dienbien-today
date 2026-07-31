@@ -21,63 +21,90 @@ export const FloatingAIBot = () => {
         flexDirection: 'column',
         alignItems: 'center',
         textDecoration: 'none',
-        cursor: 'pointer',
-        transition: 'transform 0.3s ease, filter 0.3s ease'
+        cursor: 'pointer'
       }}
     >
+      <style>{`
+        @keyframes breathingEffect {
+          0% {
+            transform: scale(1);
+            filter: drop-shadow(0 4px 12px rgba(2, 132, 199, 0.4));
+          }
+          50% {
+            transform: scale(1.12);
+            filter: drop-shadow(0 8px 24px rgba(2, 132, 199, 0.75));
+          }
+          100% {
+            transform: scale(1);
+            filter: drop-shadow(0 4px 12px rgba(2, 132, 199, 0.4));
+          }
+        }
+        .ai-breathing-head {
+          animation: breathingEffect 2.6s infinite ease-in-out;
+          transition: transform 0.3s ease;
+        }
+        .ai-breathing-head:hover {
+          transform: scale(1.18) !important;
+        }
+      `}</style>
+
+      {/* Floating Robot Avatar without background */}
       <div
-        className="floating-ai-icon-wrapper"
+        className="ai-breathing-head"
         style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-          padding: '3px',
-          boxShadow: '0 8px 24px rgba(2, 132, 199, 0.45), 0 0 0 4px rgba(2, 132, 199, 0.15)',
+          width: '72px',
+          height: '72px',
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative'
+          background: 'transparent'
         }}
       >
         <img
           src="/ai_robot_avatar-removebg.png"
-          alt="AI Assistant"
+          alt="Doson AI Assistant"
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            borderRadius: '50%',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+            background: 'transparent'
           }}
         />
+
+        {/* Small "GPT" Green Badge on Bottom Right */}
         <span
           style={{
             position: 'absolute',
             bottom: '2px',
-            right: '2px',
-            width: '12px',
-            height: '12px',
+            right: '0px',
             backgroundColor: '#10b981',
-            borderRadius: '50%',
-            border: '2px solid #ffffff'
+            color: '#ffffff',
+            fontSize: '10px',
+            fontWeight: '800',
+            padding: '2px 7px',
+            borderRadius: '10px',
+            border: '1.5px solid #ffffff',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+            letterSpacing: '0.04em',
+            lineHeight: '1.2'
           }}
-          title="Online"
-        />
+        >
+          GPT
+        </span>
       </div>
+
+      {/* Label under robot */}
       <span
         style={{
-          marginTop: '6px',
-          backgroundColor: 'rgba(12, 35, 64, 0.88)',
+          marginTop: '4px',
+          backgroundColor: 'rgba(12, 35, 64, 0.9)',
           color: '#ffffff',
           fontSize: '11px',
-          fontWeight: '600',
-          padding: '3px 8px',
+          fontWeight: '700',
+          padding: '2px 8px',
           borderRadius: '12px',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
           whiteSpace: 'nowrap'
         }}
       >
