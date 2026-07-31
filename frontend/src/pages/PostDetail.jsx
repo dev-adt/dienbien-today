@@ -236,8 +236,8 @@ export const PostDetail = () => {
     <div className="public-body" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      <main style={{ flex: 1, padding: '3rem 1.5rem 5rem' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <main style={{ flex: 1, padding: '2.5rem 1.5rem 5rem' }}>
+        <div style={{ maxWidth: '1360px', margin: '0 auto' }}>
           
           {/* Breadcrumbs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '1.5rem', textAlign: 'left' }}>
@@ -248,13 +248,13 @@ export const PostDetail = () => {
             <span style={{ color: 'var(--text-primary)' }}>{post.title}</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '30px', alignItems: 'start' }}>
+          <div className="post-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '30px', alignItems: 'start' }}>
             
             {/* Left Column: Post Details */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left', minWidth: 0 }}>
               
               {/* Cover Image */}
-              <div style={{ width: '100%', maxHeight: '420px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <div style={{ width: '100%', maxHeight: '480px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)' }}>
                 <img src={imgUrl} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
 
@@ -393,10 +393,24 @@ export const PostDetail = () => {
                   .post-html-body iframe {
                     width: 100% !important;
                     max-width: 100% !important;
-                    min-height: 380px;
-                    border-radius: 8px;
+                    min-height: 580px;
+                    border-radius: 10px;
                     border: none;
                     margin: 15px 0;
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+                  }
+                  @media (max-width: 1024px) {
+                    .post-detail-grid {
+                      grid-template-columns: 1fr !important;
+                    }
+                    .post-html-body iframe {
+                      min-height: 420px;
+                    }
+                  }
+                  @media (max-width: 640px) {
+                    .post-html-body iframe {
+                      min-height: 320px;
+                    }
                   }
                 `}</style>
               </div>
