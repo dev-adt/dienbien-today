@@ -22,10 +22,13 @@ export const Home = () => {
   const [featuredMembers, setFeaturedMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   
-  // Search state
+  // Search & Map state
   const [searchQuery, setSearchQuery] = useState('');
   const [aiQuestion, setAiQuestion] = useState('');
   const [mapCategory, setMapCategory] = useState('all');
+
+  // Scroll to Top state
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Modal State for Posts
   const [selectedPost, setSelectedPost] = useState(null);
@@ -34,6 +37,23 @@ export const Home = () => {
   // Map Ref
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+
+  // Listen to scroll position for Scroll-to-Top button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Helper for Member Colors
   const getMemberInitialsColors = (name) => {
@@ -66,7 +86,7 @@ export const Home = () => {
     fetchStats();
   }, []);
 
-  // Fetch Latest Approved Posts
+  // Fetch Latest Approved Posts (Max 3, featured first)
   useEffect(() => {
     const fetchLatestPosts = async () => {
       try {
@@ -77,7 +97,7 @@ export const Home = () => {
           const allPosts = data.data || [];
           const featured = allPosts.filter(p => p.is_featured === 1);
           const normal = allPosts.filter(p => p.is_featured !== 1);
-          setLatestPosts([...featured, ...normal].slice(0, 4));
+          setLatestPosts([...featured, ...normal].slice(0, 3));
         }
       } catch (err) {
         console.error('Error fetching latest posts:', err);
@@ -136,7 +156,6 @@ export const Home = () => {
       const L = window.L;
       if (!L) return;
 
-      // Coordinates for Đồ Sơn: 20.7077° N, 106.7865° E
       const map = L.map(mapContainerRef.current).setView([20.7077, 106.7865], 13);
       mapInstanceRef.current = map;
 
@@ -146,7 +165,6 @@ export const Home = () => {
         maxZoom: 19
       }).addTo(map);
 
-      // Load GeoJSON boundary
       fetch('/Đồ Sơn.geojson')
         .then(res => res.json())
         .then(geojson => {
@@ -162,7 +180,6 @@ export const Home = () => {
         })
         .catch(err => console.log('GeoJSON load note:', err));
 
-      // Key Locations Markers
       const locations = [
         { name: "Khu du lịch Đồi Rồng (Dragon Ocean)", lat: 20.695, lng: 106.772, category: "stay", desc: "Resort & Công viên nước" },
         { name: "Đảo Hòn Dấu & Ngọn Hải Đăng", lat: 20.669, lng: 106.814, category: "attractions", desc: "Di tích & Danh thắng" },
@@ -199,17 +216,6 @@ export const Home = () => {
       }
     };
   }, []);
-
-  // Event & Post Actions
-  const openPostDetail = (post) => {
-    setSelectedPost(post);
-    setModalOpen(true);
-  };
-
-  const closePostDetail = () => {
-    setSelectedPost(null);
-    setModalOpen(false);
-  };
 
   const openEventDetail = (event) => {
     if (!token) {
@@ -283,12 +289,78 @@ export const Home = () => {
     }
   };
 
+  // Gradient text style helper
+  const gradientTitleStyle = {
+    fontFamily: 'var(--font-title, sans-serif)',
+    background: 'linear-gradient(135deg, #0c2340 0%, #0284c7 60%, #0369a1 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    display: 'inline-block'
+  };
+
+  // Fallback demo posts with rich images matching the user's reference design
+  const demoNewsList = [
+    {
+      id: 1,
+      title: 'Tháp Tường Long – di tích lịch sử văn hóa nghìn năm tuổi Hải Phòng',
+      image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+      author_name: 'Đồi Rồng Đồ Sơn',
+      created_at: '10/7/2026',
+      is_featured: 1
+    },
+    {
+      id: 2,
+      title: 'Hội thảo khoa học "Văn hóa biển trong thời đại Hùng Vương": Làm rõ vị trí, vai trò của biển...',
+      image_url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80',
+      author_name: 'Đồi Rồng Đồ Sơn',
+      created_at: '10/7/2026',
+      is_featured: 1
+    },
+    {
+      id: 3,
+      title: 'Bến tàu không số K15 tại quận Đồ Sơn - Di tích lịch sử Quốc gia đặc biệt',
+      image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+      author_name: 'Đồi Rồng Đồ Sơn',
+      created_at: '10/7/2026',
+      is_featured: 0
+    }
+  ];
+
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1e293b' }}>
       <Navbar />
 
       {/* Floating AI Bot widget */}
       <FloatingAIBot />
+
+      {/* Floating Scroll-to-Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          title="Lướt lên đầu trang"
+          style={{
+            position: 'fixed',
+            right: '24px',
+            bottom: '24px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: '#0284c7',
+            color: '#ffffff',
+            border: 'none',
+            boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            zIndex: 9998,
+            transition: 'transform 0.2s ease, opacity 0.2s ease'
+          }}
+        >
+          <i className="ti ti-arrow-up"></i>
+        </button>
+      )}
 
       {/* BLOCK 1: Hero Banner */}
       <section 
@@ -307,8 +379,8 @@ export const Home = () => {
             <span>{t('hero_badge_v2')}</span>
           </div>
 
-          {/* Title */}
-          <h1 style={{ fontFamily: 'var(--font-title, sans-serif)', fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: '800', color: '#0c2340', lineHeight: '1.25', marginBottom: '1.2rem' }}>
+          {/* Title with Vibrant Theme Gradient */}
+          <h1 style={{ ...gradientTitleStyle, fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: '800', lineHeight: '1.25', marginBottom: '1.2rem' }}>
             {t('hero_title_v2')}
           </h1>
 
@@ -438,7 +510,7 @@ export const Home = () => {
         <section id="quick-access" style={{ padding: '4rem 0 3rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('qa_badge')}</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '6px' }}>{t('qa_title')}</h2>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '6px' }}>{t('qa_title')}</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
@@ -607,7 +679,7 @@ export const Home = () => {
         <section id="explore" style={{ marginBottom: '4rem' }}>
           <div style={{ marginBottom: '2rem' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('identity_badge')}</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('identity_title')}</h2>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('identity_title')}</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
@@ -635,7 +707,7 @@ export const Home = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('tourism_badge')}</span>
-              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('tourism_title')}</h2>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('tourism_title')}</h2>
             </div>
             <Link to="/search" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_services')} &gt;</Link>
           </div>
@@ -692,7 +764,7 @@ export const Home = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('itin_badge')}</span>
-              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('itin_title')}</h2>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('itin_title')}</h2>
             </div>
             <Link to="/ai-chat" style={{ backgroundColor: '#0284c7', color: '#ffffff', fontWeight: '700', fontSize: '13px', padding: '8px 16px', borderRadius: '8px', textDecoration: 'none' }}>
               {t('btn_custom_ai')}
@@ -725,7 +797,7 @@ export const Home = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('showroom_badge')}</span>
-              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('showroom_title')}</h2>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('showroom_title')}</h2>
             </div>
             <Link to="/members" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_biz')} &gt;</Link>
           </div>
@@ -817,7 +889,7 @@ export const Home = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('events_badge')}</span>
-              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('events_title')}</h2>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('events_title')}</h2>
             </div>
             <Link to="/events" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_events')} &gt;</Link>
           </div>
@@ -863,7 +935,7 @@ export const Home = () => {
         <section id="community" style={{ marginBottom: '4rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('community_badge')}</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('community_title')}</h2>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('community_title')}</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -883,53 +955,149 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 12: News & Articles */}
+        {/* BLOCK 12: News & Articles - Redesigned Cards with Image Thumbnails (Max 3, Direct Link to Detail Page) */}
         <section id="news" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('news_badge')}</span>
-              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('news_title')}</h2>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('news_title')}</h2>
             </div>
-            <Link to="/posts" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_news')} &gt;</Link>
+            <Link to="/posts" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none', backgroundColor: 'rgba(2, 132, 199, 0.08)', padding: '6px 14px', borderRadius: '99px' }}>
+              {t('btn_all_news')} &rarr;
+            </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-            {latestPosts.length > 0 ? (
-              latestPosts.map((post) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {(latestPosts.length > 0 ? latestPosts : demoNewsList).slice(0, 3).map((post) => {
+              const imageUrl = post.image_url || post.image || "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80";
+              const dateStr = post.created_at ? (new Date(post.created_at).toLocaleDateString('vi-VN') !== 'Invalid Date' ? new Date(post.created_at).toLocaleDateString('vi-VN') : post.created_at) : '10/7/2026';
+              const publisherName = post.author_name || post.company_name || "Đồi Rồng Đồ Sơn";
+              
+              return (
                 <div 
-                  key={post.id} 
-                  onClick={() => openPostDetail(post)}
-                  style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}
+                  key={post.id}
+                  onClick={() => navigate(`/posts/${post.id}`)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 14px rgba(12, 35, 64, 0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'transform 0.25s ease, boxShadow 0.25s ease'
+                  }}
                 >
-                  <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '700', marginBottom: '6px' }}>Tin tức</span>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0c2340', marginBottom: '8px', lineHeight: '1.4', flex: 1 }}>{post.title}</h3>
-                  <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: '700', marginTop: 'auto' }}>{t('btn_read_next')}</span>
+                  {/* Thumbnail Image Header */}
+                  <div style={{ height: '180px', position: 'relative', overflow: 'hidden', backgroundColor: '#e2e8f0' }}>
+                    <img 
+                      src={imageUrl} 
+                      alt={post.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {post.is_featured === 1 && (
+                      <span 
+                        style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          backgroundColor: '#f59e0b',
+                          color: '#000000',
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                          letterSpacing: '0.04em'
+                        }}
+                      >
+                        NỔI BẬT ⭐
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Card Content Body */}
+                  <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <h3 
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        color: '#0c2340',
+                        lineHeight: '1.5',
+                        marginBottom: '1rem',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: '4.5em'
+                      }}
+                    >
+                      {post.title}
+                    </h3>
+
+                    {/* Publisher Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                      <div 
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          backgroundColor: '#e0f2fe',
+                          color: '#0284c7',
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid #bae6fd'
+                        }}
+                      >
+                        ĐÔ
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                        {publisherName}
+                      </span>
+                    </div>
+
+                    {/* Footer Row: Date + Đọc bài Button */}
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
+                        {dateStr}
+                      </span>
+                      <button
+                        onClick={(evt) => {
+                          evt.stopPropagation();
+                          navigate(`/posts/${post.id}`);
+                        }}
+                        style={{
+                          backgroundColor: '#0284c7',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 14px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)'
+                        }}
+                      >
+                        Đọc bài
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              ))
-            ) : (
-              [
-                "Đền Bà Đế – Tìm về chốn linh thiêng và huyền bí",
-                "Hòn Dấu Hải Phòng – những review chi tiết nhất cho chuyến đi",
-                "Tháp Tường Long – di tích lịch sử văn hóa nghìn năm tuổi Hải Phòng",
-                "Hội thảo khoa học \"Văn hóa biển trong thời đại Hùng Vương\""
-              ].map((title, idx) => (
-                <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-                  <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '700', marginBottom: '6px', display: 'block' }}>Tin tức</span>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0c2340', marginBottom: '8px', lineHeight: '1.4' }}>{title}</h3>
-                  <Link to="/posts" style={{ fontSize: '12px', color: '#0284c7', fontWeight: '700', textDecoration: 'none' }}>{t('btn_read_next')}</Link>
-                </div>
-              ))
-            )}
+              );
+            })}
           </div>
         </section>
 
-        {/* BLOCK 13: Interactive Leaflet Digital Map */}
         <section id="map" style={{ marginBottom: '4rem' }}>
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '1.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
               <div>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase' }}>{t('map_badge')}</span>
-                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '24px', fontWeight: '800', color: '#0c2340', marginTop: '2px' }}>{t('map_title')}</h2>
+                <h2 style={{ ...gradientTitleStyle, fontSize: '24px', fontWeight: '800', marginTop: '2px' }}>{t('map_title')}</h2>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => alert('GPS location enabled')} style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>📍 {t('map_gps_btn')}</button>
@@ -972,7 +1140,7 @@ export const Home = () => {
         <section id="roles" style={{ marginBottom: '4rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('join_badge')}</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#0c2340', marginTop: '4px' }}>{t('join_title')}</h2>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('join_title')}</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
@@ -997,7 +1165,7 @@ export const Home = () => {
         <section id="newsletter" style={{ marginBottom: '4rem' }}>
           <div style={{ backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '20px', padding: '2.5rem 2rem', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('nl_badge')}</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '26px', fontWeight: '800', color: '#0c2340', marginTop: '4px', marginBottom: '8px' }}>{t('nl_title')}</h2>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '26px', fontWeight: '800', marginTop: '4px', marginBottom: '8px' }}>{t('nl_title')}</h2>
             <p style={{ fontSize: '14px', color: '#475569', maxWidth: '600px', margin: '0 auto 1.5rem' }}>{t('nl_sub')}</p>
 
             <form onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn đã đăng ký nhận bản tin Doson.today!'); }} style={{ display: 'flex', gap: '10px', maxWidth: '550px', margin: '0 auto 1rem', flexWrap: 'wrap' }}>
@@ -1076,24 +1244,6 @@ export const Home = () => {
                 <i className={selectedEvent.is_interested ? "ti ti-star-filled" : "ti ti-star"}></i> {selectedEvent.is_interested ? "Đã quan tâm" : "Quan tâm sự kiện"}
               </button>
               <button onClick={() => setEventModalOpen(false)} style={{ backgroundColor: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-                {t('btn_close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Post Modal */}
-      {modalOpen && selectedPost && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8,14,30,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-          <div style={{ width: '100%', maxWidth: '600px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', margin: 0 }}>{selectedPost.title}</h3>
-              <button onClick={closePostDetail} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '20px', cursor: 'pointer' }}>×</button>
-            </div>
-            <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.7', maxHeight: '60vh', overflowY: 'auto' }}>{selectedPost.content || selectedPost.description}</p>
-            <div style={{ textAlign: 'right', marginTop: '1.5rem' }}>
-              <button onClick={closePostDetail} style={{ backgroundColor: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '8px 20px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                 {t('btn_close')}
               </button>
             </div>

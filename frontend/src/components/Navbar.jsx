@@ -211,7 +211,16 @@ export const Navbar = () => {
         }}
       >
         {/* Brand Logo & Name */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
+        <Link 
+          to="/" 
+          onClick={(e) => {
+            if (location.pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}
+        >
           <div 
             style={{
               width: '36px',
