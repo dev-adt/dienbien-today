@@ -685,31 +685,25 @@ export default function InteractiveMap() {
         flexDirection: 'column',
         width: isFullscreen ? '100vw' : '100%',
         height: isFullscreen ? '100vh' : 'auto',
-        overflow: 'hidden'
+        overflow: isFullscreen ? 'hidden' : 'visible'
       }}
     >
-      {/* 
-        PERSISTENT LEAFLET MAP CANVAS DOM NODE
-        Always mounted to prevent blank maps when switching modes
-      */}
-      <div 
-        ref={mapContainerRef} 
-        style={{ 
-          width: '100%', 
-          height: isFullscreen ? '100vh' : '420px', 
-          position: isFullscreen ? 'absolute' : 'relative',
-          inset: isFullscreen ? 0 : 'auto',
-          borderRadius: isFullscreen ? 0 : '16px', 
-          overflow: 'hidden', 
-          border: isFullscreen ? 'none' : '1px solid #cbd5e1', 
-          zIndex: 1,
-          backgroundColor: '#cbd5e1'
-        }}
-      />
-
-      {/* FULLSCREEN OVERLAYS (GOOGLE MAPS STYLE SIDEBAR & CONTROL BAR) */}
       {isFullscreen ? (
+        /* FULLSCREEN OVERLAYS (GOOGLE MAPS STYLE SIDEBAR & CONTROL BAR) */
         <>
+          {/* PERSISTENT LEAFLET MAP CANVAS IN FULLSCREEN (BACKGROUND 100% VIEWPORT) */}
+          <div 
+            ref={mapContainerRef} 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              position: 'absolute',
+              inset: 0,
+              zIndex: 1,
+              backgroundColor: '#cbd5e1'
+            }}
+          />
+
           {/* FLOATING ACTION BAR (TOP RIGHT) */}
           <div style={{
             position: 'absolute',
@@ -1003,9 +997,9 @@ export default function InteractiveMap() {
           )}
         </>
       ) : (
-        /* STANDARD INLINE MODE OVERLAYS & SLIDER */
+        /* STANDARD INLINE MODE OVERLAYS & SLIDER (TOP-TO-BOTTOM) */
         <>
-          {/* MAP HEADER */}
+          {/* 1. MAP HEADER (ALWAYS AT THE TOP) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.2rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -1093,7 +1087,7 @@ export default function InteractiveMap() {
             </div>
           </div>
 
-          {/* SEARCH BOX & FILTERS ROW */}
+          {/* 2. SEARCH BOX & FILTERS ROW */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.2rem' }}>
             {/* Search Input Box */}
             <div style={{ position: 'relative', width: '100%' }}>
@@ -1197,8 +1191,23 @@ export default function InteractiveMap() {
             </div>
           </div>
 
-          {/* LOCATION SLIDER SECTION (1 SINGLE ROW WITH SLIDE ARROWS & INDEX NUMBERS) */}
-          <div style={{ marginTop: '1.2rem' }}>
+          {/* 3. PERSISTENT LEAFLET MAP CANVAS IN INLINE MODE (BELOW HEADER & FILTERS) */}
+          <div 
+            ref={mapContainerRef} 
+            style={{ 
+              width: '100%', 
+              height: '420px',
+              borderRadius: '16px', 
+              overflow: 'hidden', 
+              border: '1px solid #cbd5e1', 
+              marginBottom: '1.2rem',
+              zIndex: 1,
+              backgroundColor: '#cbd5e1'
+            }}
+          />
+
+          {/* 4. LOCATION SLIDER SECTION (BELOW MAP CANVAS) */}
+          <div style={{ marginTop: '0.5rem' }}>
             {/* Slider Header Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
