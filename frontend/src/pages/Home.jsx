@@ -22,6 +22,16 @@ export const Home = () => {
   const [featuredMembers, setFeaturedMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   
+  // Realtime Weather State (Open-Meteo API for Đồ Sơn: 20.7077, 106.7865)
+  const [weatherData, setWeatherData] = useState({
+    temp: 28,
+    desc: 'Nắng nhẹ, gió biển 12 km/h',
+    time: 'Vừa cập nhật',
+    icon: 'ti-sun',
+    status: 'An toàn tắm biển',
+    loading: true
+  });
+
   // Search & Map state
   const [searchQuery, setSearchQuery] = useState('');
   const [aiQuestion, setAiQuestion] = useState('');
@@ -29,10 +39,6 @@ export const Home = () => {
 
   // Scroll to Top state
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  // Modal State for Posts
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   // Map Ref
   const mapContainerRef = useRef(null);
@@ -55,20 +61,63 @@ export const Home = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Helper for Member Colors
-  const getMemberInitialsColors = (name) => {
-    if (!name) return { bg: '#E6F1FB', fg: '#0C447C' };
-    const sum = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const colors = [
-      { bg: '#E6F1FB', fg: '#0C447C' },
-      { bg: '#EAF3DE', fg: '#27500A' },
-      { bg: '#FAEEDA', fg: '#633806' },
-      { bg: '#EEEDFE', fg: '#3C3489' },
-      { bg: '#E1F5EE', fg: '#085041' },
-      { bg: '#FAECE7', fg: '#712B13' }
-    ];
-    return colors[sum % colors.length];
-  };
+  // Realtime Weather Fetching from Open-Meteo API (100% Free, No API key needed)
+  useEffect(() => {
+    const fetchLiveWeather = async () => {
+      try {
+        const res = await fetch(
+          'https://api.open-meteo.com/v1/forecast?latitude=20.7077&longitude=106.7865&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FHo_Chi_Minh'
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const current = data.current;
+          if (current) {
+            const temp = Math.round(current.temperature_2m);
+            const wind = Math.round(current.wind_speed_10m);
+            const code = current.weather_code;
+
+            let desc = 'Trời quang, gió nhẹ';
+            let icon = 'ti-sun';
+            let status = 'An toàn tắm biển';
+
+            if (code === 0 || code === 1) {
+              desc = `Nắng đẹp, gió biển ${wind} km/h`;
+              icon = 'ti-sun';
+              status = 'An toàn tắm biển';
+            } else if (code === 2 || code === 3) {
+              desc = `Có mây rải rác, gió biển ${wind} km/h`;
+              icon = 'ti-cloud-sun';
+              status = 'An toàn tắm biển';
+            } else if (code >= 51 && code <= 67) {
+              desc = `Mưa nhỏ rải rác, gió biển ${wind} km/h`;
+              icon = 'ti-cloud-rain';
+              status = 'Chú ý khi tắm biển';
+            } else if (code >= 80) {
+              desc = `Mưa rào & dông, gió ${wind} km/h`;
+              icon = 'ti-cloud-storm';
+              status = 'Hạn chế tắm biển';
+            }
+
+            setWeatherData({
+              temp,
+              desc,
+              time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' hôm nay',
+              icon,
+              status,
+              loading: false
+            });
+          }
+        }
+      } catch (err) {
+        console.log('Open-Meteo live weather fetch note:', err);
+      }
+    };
+
+    fetchLiveWeather();
+    // Refresh weather every 10 minutes
+    const interval = setInterval(fetchLiveWeather, 600000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch Public Stats
   useEffect(() => {
@@ -289,13 +338,14 @@ export const Home = () => {
     }
   };
 
-  // Gradient text style helper
+  // Gradient text style for main titles - display block so title stays on 2nd row below badge!
   const gradientTitleStyle = {
     fontFamily: 'var(--font-title, sans-serif)',
     background: 'linear-gradient(135deg, #0c2340 0%, #0284c7 60%, #0369a1 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
-    display: 'inline-block'
+    display: 'block',
+    margin: 0
   };
 
   // Fallback demo posts with rich images matching the user's reference design
@@ -325,6 +375,8 @@ export const Home = () => {
       is_featured: 0
     }
   ];
+
+  const activeEvent = events.length > 0 ? events[0] : null;
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1e293b' }}>
@@ -506,11 +558,15 @@ export const Home = () => {
 
       <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '0 1.5rem' }}>
 
-        {/* BLOCK 2: Quick Access Shortcuts */}
+        {/* BLOCK 2: Quick Access Shortcuts (2-Row Title Layout) */}
         <section id="quick-access" style={{ padding: '4rem 0 3rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('qa_badge')}</span>
-            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '6px' }}>{t('qa_title')}</h2>
+          <div style={{ marginBottom: '2rem' }}>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {t('qa_badge')}
+            </span>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+              {t('qa_title')}
+            </h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
@@ -525,7 +581,8 @@ export const Home = () => {
               { icon: 'ti-users', title: t('qa_8_title'), desc: t('qa_8_desc'), link: '#community', color: '#14b8a6', bg: '#ccfbf1' }
             ].map((item, idx) => (
               <a 
-                key={idx} 
+                key={idx}
+                className="card-hover-effect"
                 href={item.link.startsWith('/') ? undefined : item.link}
                 onClick={item.link.startsWith('/') ? () => navigate(item.link) : undefined}
                 style={{
@@ -537,8 +594,7 @@ export const Home = () => {
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '14px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                  transition: 'transform 0.2s, boxShadow 0.2s'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                 }}
               >
                 <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: item.bg, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
@@ -641,45 +697,86 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 4: Weather & Today Fast Updates */}
+        {/* BLOCK 4: Realtime Weather & Today Real Events Fast Update */}
         <section id="today-highlights" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            {/* Weather Card */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+            {/* Realtime Weather Card (Open-Meteo API) */}
+            <div className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase' }}>{t('weather_title')}</span>
-                <span style={{ fontSize: '11px', backgroundColor: '#d1fae5', color: '#059669', fontWeight: '700', padding: '2px 8px', borderRadius: '99px' }}>{t('weather_status_badge')}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase' }}>THỜI TIẾT & BIỂN ĐỒ SƠN</span>
+                <span style={{ fontSize: '11px', backgroundColor: '#d1fae5', color: '#059669', fontWeight: '700', padding: '2px 8px', borderRadius: '99px' }}>
+                  {weatherData.status}
+                </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '1rem' }}>
-                <i className="ti ti-sun" style={{ fontSize: '42px', color: '#f59e0b' }}></i>
+                <i className={`ti ${weatherData.icon}`} style={{ fontSize: '42px', color: '#f59e0b' }}></i>
                 <div>
-                  <div style={{ fontSize: '32px', fontWeight: '800', color: '#0c2340', leading: '1' }}>{t('weather_temp')}</div>
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>{t('weather_desc')}</div>
+                  <div style={{ fontSize: '32px', fontWeight: '800', color: '#0c2340', lineHeight: '1' }}>
+                    {weatherData.temp}°C
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                    {weatherData.desc}
+                  </div>
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-                <i className="ti ti-info-circle"></i> {t('weather_source')}
+              <div style={{ fontSize: '11px', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span><i className="ti ti-radar"></i> Trạm Đồ Sơn (Realtime)</span>
+                <span>🕒 {weatherData.time}</span>
               </div>
             </div>
 
-            {/* Today Fast Update Card */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase', marginBottom: '8px' }}>{t('today_badge')}</div>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', marginBottom: '8px', lineHeight: '1.4' }}>{t('today_title')}</h3>
-              <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', marginBottom: '1rem' }}>{t('today_desc')}</p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px', fontSize: '12px' }}>
-                <span style={{ color: '#94a3b8' }}><i className="ti ti-clock"></i> {t('today_time')}</span>
-                <Link to="/events" style={{ color: '#0284c7', fontWeight: '700', textDecoration: 'none' }}>{t('today_link')}</Link>
+            {/* Today Fast Update Card - Real Event Data */}
+            <div className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase', marginBottom: '8px' }}>
+                {t('today_badge')}
               </div>
+              {activeEvent ? (
+                <>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', marginBottom: '8px', lineHeight: '1.4' }}>
+                    {activeEvent.title}
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', marginBottom: '1rem', flex: 1 }}>
+                    📍 {activeEvent.location || 'Quận Đồ Sơn, Hải Phòng'} – {activeEvent.description ? (activeEvent.description.length > 110 ? activeEvent.description.substring(0, 110) + '...' : activeEvent.description) : 'Chuỗi hoạt động văn hóa, du lịch & giao thương sôi động.'}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px', fontSize: '12px' }}>
+                    <span style={{ color: '#94a3b8' }}>
+                      <i className="ti ti-calendar"></i> {activeEvent.event_date ? new Date(activeEvent.event_date).toLocaleDateString('vi-VN') : 'Sắp diễn ra'}
+                    </span>
+                    <button 
+                      onClick={() => openEventDetail(activeEvent)} 
+                      style={{ background: 'none', border: 'none', color: '#0284c7', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+                    >
+                      Xem chi tiết sự kiện &gt;
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', marginBottom: '8px', lineHeight: '1.4' }}>
+                    {t('today_title')}
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', marginBottom: '1rem', flex: 1 }}>
+                    {t('today_desc')}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px', fontSize: '12px' }}>
+                    <span style={{ color: '#94a3b8' }}><i className="ti ti-clock"></i> {t('today_time')}</span>
+                    <Link to="/events" style={{ color: '#0284c7', fontWeight: '700', textDecoration: 'none' }}>{t('today_link')}</Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
 
-        {/* BLOCK 5: Local Identity (Khám phá Đồ Sơn) */}
+        {/* BLOCK 5: Local Identity (Khám phá Đồ Sơn - 2-Row Title) */}
         <section id="explore" style={{ marginBottom: '4rem' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('identity_badge')}</span>
-            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('identity_title')}</h2>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {t('identity_badge')}
+            </span>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+              {t('identity_title')}
+            </h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
@@ -691,7 +788,7 @@ export const Home = () => {
               { title: t('id_5_t'), desc: t('id_5_d'), icon: 'ti-book' },
               { title: t('id_6_t'), desc: t('id_6_d'), icon: 'ti-history' }
             ].map((item, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '10px' }}>
                   <i className={`ti ${item.icon}`}></i>
                 </div>
@@ -702,12 +799,16 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 6: Tourism & Dining Experiences */}
+        {/* BLOCK 6: Tourism & Dining Experiences (2-Row Title) */}
         <section id="tourism" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('tourism_badge')}</span>
-              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('tourism_title')}</h2>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('tourism_badge')}
+              </span>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+                {t('tourism_title')}
+              </h2>
             </div>
             <Link to="/search" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_services')} &gt;</Link>
           </div>
@@ -736,7 +837,7 @@ export const Home = () => {
                 img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80"
               }
             ].map((item, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
                   <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <span style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'rgba(12,35,64,0.85)', color: '#ffffff', fontSize: '11px', fontWeight: '600', padding: '4px 10px', borderRadius: '6px' }}>{item.badge}</span>
@@ -759,12 +860,16 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 7: Suggested Itineraries */}
+        {/* BLOCK 7: Suggested Itineraries (2-Row Title) */}
         <section id="itinerary" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('itin_badge')}</span>
-              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('itin_title')}</h2>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('itin_badge')}
+              </span>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+                {t('itin_title')}
+              </h2>
             </div>
             <Link to="/ai-chat" style={{ backgroundColor: '#0284c7', color: '#ffffff', fontWeight: '700', fontSize: '13px', padding: '8px 16px', borderRadius: '8px', textDecoration: 'none' }}>
               {t('btn_custom_ai')}
@@ -777,7 +882,7 @@ export const Home = () => {
               { tag: t('itin2_tag'), title: t('itin2_t'), steps: t('itin2_s') },
               { tag: t('itin3_tag'), title: t('itin3_t'), steps: t('itin3_s') }
             ].map((tour, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', backgroundColor: '#e0f2fe', padding: '3px 10px', borderRadius: '6px', width: 'fit-content', marginBottom: '10px' }}>{tour.tag}</span>
                 <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#0c2340', marginBottom: '10px' }}>{tour.title}</h3>
                 <p style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6', flex: 1, marginBottom: '1.2rem' }}>📍 {tour.steps}</p>
@@ -792,12 +897,16 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 8: Digital Showroom (Doanh nghiệp & OCOP) */}
+        {/* BLOCK 8: Digital Showroom (2-Row Title) */}
         <section id="showroom" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('showroom_badge')}</span>
-              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('showroom_title')}</h2>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('showroom_badge')}
+              </span>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+                {t('showroom_title')}
+              </h2>
             </div>
             <Link to="/members" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_biz')} &gt;</Link>
           </div>
@@ -823,7 +932,7 @@ export const Home = () => {
                 desc: t('sr3_d')
               }
             ].map((item, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '600' }}>{item.badge}</span>
                   <span style={{ fontSize: '11px', color: '#059669', fontWeight: '700' }}>{item.status}</span>
@@ -843,7 +952,7 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 9: Investment & Collaboration (Dark Container) */}
+        {/* BLOCK 9: Investment & Collaboration (Dark Container, 2-Row Title) */}
         <section id="investment" style={{ marginBottom: '4rem' }}>
           <div 
             style={{
@@ -856,8 +965,12 @@ export const Home = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('invest_badge')}</span>
-                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#ffffff', marginTop: '4px' }}>{t('invest_title')}</h2>
+                <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                  {t('invest_badge')}
+                </span>
+                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '28px', fontWeight: '800', color: '#ffffff', margin: 0 }}>
+                  {t('invest_title')}
+                </h2>
               </div>
               <Link to="/register" style={{ backgroundColor: '#0284c7', color: '#ffffff', fontWeight: '700', fontSize: '13px', padding: '10px 18px', borderRadius: '8px', textDecoration: 'none' }}>
                 {t('btn_post_proposal')}
@@ -870,7 +983,7 @@ export const Home = () => {
                 { owner: t('inv2_owner'), title: t('inv2_t'), target: t('inv2_target'), date: t('inv2_date') },
                 { owner: t('inv3_owner'), title: t('inv3_t'), target: t('inv3_target'), date: t('inv3_date') }
               ].map((item, idx) => (
-                <div key={idx} style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
+                <div key={idx} className="card-hover-effect" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: '600', marginBottom: '6px' }}>🔹 {item.owner}</span>
                   <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#ffffff', marginBottom: '10px', lineHeight: '1.4' }}>{item.title}</h3>
                   <div style={{ fontSize: '12.5px', color: '#93b4d4', marginBottom: '6px' }}>{item.target}</div>
@@ -884,12 +997,16 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 10: Events & Festivals */}
+        {/* BLOCK 10: Events & Festivals (2-Row Title) */}
         <section id="events" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('events_badge')}</span>
-              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('events_title')}</h2>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('events_badge')}
+              </span>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+                {t('events_title')}
+              </h2>
             </div>
             <Link to="/events" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>{t('btn_all_events')} &gt;</Link>
           </div>
@@ -903,7 +1020,7 @@ export const Home = () => {
               events.map((e) => {
                 const dateStr = e.event_date ? new Date(e.event_date).toLocaleDateString('vi-VN') : '15/07/2026';
                 return (
-                  <div key={e.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+                  <div key={e.id} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                       <span style={{ fontSize: '11px', backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: '700', padding: '2px 8px', borderRadius: '4px' }}>SẮP DIỄN RA</span>
                       <button 
@@ -931,11 +1048,15 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 11: Community Network */}
+        {/* BLOCK 11: Community Network (2-Row Title) */}
         <section id="community" style={{ marginBottom: '4rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('community_badge')}</span>
-            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('community_title')}</h2>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {t('community_badge')}
+            </span>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+              {t('community_title')}
+            </h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -944,7 +1065,7 @@ export const Home = () => {
               { title: t('com2_t'), desc: t('com2_d') },
               { title: t('com3_t'), desc: t('com3_d') }
             ].map((com, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#0c2340', marginBottom: '10px' }}>{com.title}</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.6', flex: 1, marginBottom: '1.2rem' }}>{com.desc}</p>
                 <Link to="/register" style={{ backgroundColor: '#0284c7', color: '#ffffff', textAlign: 'center', borderRadius: '8px', padding: '10px', fontSize: '13px', fontWeight: '700', textDecoration: 'none' }}>
@@ -955,12 +1076,16 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 12: News & Articles - Redesigned Cards with Image Thumbnails (Max 3, Direct Link to Detail Page) */}
+        {/* BLOCK 12: News & Articles - 2-Row Title, Image Cards, Max 3 */}
         <section id="news" style={{ marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('news_badge')}</span>
-              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('news_title')}</h2>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('news_badge')}
+              </span>
+              <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+                {t('news_title')}
+              </h2>
             </div>
             <Link to="/posts" style={{ color: '#0284c7', fontWeight: '700', fontSize: '14px', textDecoration: 'none', backgroundColor: 'rgba(2, 132, 199, 0.08)', padding: '6px 14px', borderRadius: '99px' }}>
               {t('btn_all_news')} &rarr;
@@ -976,6 +1101,7 @@ export const Home = () => {
               return (
                 <div 
                   key={post.id}
+                  className="card-hover-effect"
                   onClick={() => navigate(`/posts/${post.id}`)}
                   style={{
                     backgroundColor: '#ffffff',
@@ -985,8 +1111,7 @@ export const Home = () => {
                     boxShadow: '0 4px 14px rgba(12, 35, 64, 0.05)',
                     display: 'flex',
                     flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.25s ease, boxShadow 0.25s ease'
+                    cursor: 'pointer'
                   }}
                 >
                   {/* Thumbnail Image Header */}
@@ -1092,12 +1217,17 @@ export const Home = () => {
           </div>
         </section>
 
+        {/* BLOCK 13: Interactive Leaflet Digital Map (2-Row Title) */}
         <section id="map" style={{ marginBottom: '4rem' }}>
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '1.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase' }}>{t('map_badge')}</span>
-                <h2 style={{ ...gradientTitleStyle, fontSize: '24px', fontWeight: '800', marginTop: '2px' }}>{t('map_title')}</h2>
+                <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase', marginBottom: '4px' }}>
+                  {t('map_badge')}
+                </span>
+                <h2 style={{ ...gradientTitleStyle, fontSize: '24px', fontWeight: '800' }}>
+                  {t('map_title')}
+                </h2>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => alert('GPS location enabled')} style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>📍 {t('map_gps_btn')}</button>
@@ -1136,11 +1266,15 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 14: Ecosystem Roles */}
+        {/* BLOCK 14: Ecosystem Roles (2-Row Title) */}
         <section id="roles" style={{ marginBottom: '4rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('join_badge')}</span>
-            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800', marginTop: '4px' }}>{t('join_title')}</h2>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {t('join_badge')}
+            </span>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '28px', fontWeight: '800' }}>
+              {t('join_title')}
+            </h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
@@ -1150,7 +1284,7 @@ export const Home = () => {
               { title: t('role3_t'), desc: t('role3_d'), btn: t('role3_btn') },
               { title: t('role4_t'), desc: t('role4_d'), btn: t('role4_btn') }
             ].map((roleItem, idx) => (
-              <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={idx} className="card-hover-effect" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0c2340', marginBottom: '8px' }}>{roleItem.title}</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5', flex: 1, marginBottom: '1.2rem' }}>{roleItem.desc}</p>
                 <Link to="/register" style={{ backgroundColor: '#0284c7', color: '#ffffff', textAlign: 'center', borderRadius: '8px', padding: '8px', fontSize: '12.5px', fontWeight: '700', textDecoration: 'none' }}>
@@ -1161,11 +1295,15 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 15: Newsletter Subscription */}
+        {/* BLOCK 15: Newsletter Subscription (2-Row Title) */}
         <section id="newsletter" style={{ marginBottom: '4rem' }}>
           <div style={{ backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '20px', padding: '2.5rem 2rem', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('nl_badge')}</span>
-            <h2 style={{ ...gradientTitleStyle, fontSize: '26px', fontWeight: '800', marginTop: '4px', marginBottom: '8px' }}>{t('nl_title')}</h2>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {t('nl_badge')}
+            </span>
+            <h2 style={{ ...gradientTitleStyle, fontSize: '26px', fontWeight: '800', marginBottom: '8px' }}>
+              {t('nl_title')}
+            </h2>
             <p style={{ fontSize: '14px', color: '#475569', maxWidth: '600px', margin: '0 auto 1.5rem' }}>{t('nl_sub')}</p>
 
             <form onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn đã đăng ký nhận bản tin Doson.today!'); }} style={{ display: 'flex', gap: '10px', maxWidth: '550px', margin: '0 auto 1rem', flexWrap: 'wrap' }}>
