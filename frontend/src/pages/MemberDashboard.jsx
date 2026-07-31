@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import RichTextEditor from '../components/RichTextEditor';
 import { useTranslation } from '../contexts/LanguageContext';
-import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory } from '../constants/categories';
+import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory, getCategoryLabel } from '../constants/categories';
 
 export const MemberDashboard = () => {
   const { user, token, getAuthHeaders, logout } = useAuth();
-  const { t } = useTranslation();
+  const { currentLang, t } = useTranslation();
   const navigate = useNavigate();
 
   // State
@@ -859,9 +859,9 @@ export const MemberDashboard = () => {
                       }}
                       required
                     >
-                      <option value="">-- Chọn Chuyên mục --</option>
+                      <option value="">-- {currentLang === 'en' ? 'Select category' : 'Chọn Chuyên mục'} --</option>
                       {categoriesList.map(c => (
-                        <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                        <option key={c.id || c.name} value={c.name}>{getCategoryLabel(c, currentLang)}</option>
                       ))}
                     </select>
                   </div>
@@ -875,9 +875,9 @@ export const MemberDashboard = () => {
                       disabled={!newPostData.category}
                       required
                     >
-                      <option value="">-- Chọn Lĩnh vực --</option>
+                      <option value="">-- {currentLang === 'en' ? 'Select sector' : 'Chọn Lĩnh vực'} --</option>
                       {((categoriesList.find(c => c.name === newPostData.category)?.subcategories || []).map(s => typeof s === 'string' ? s : s.name)).map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
+                        <option key={sub} value={sub}>{getCategoryLabel(sub, currentLang)}</option>
                       ))}
                     </select>
                   </div>

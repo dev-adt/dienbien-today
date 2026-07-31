@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS chat_logs (
 CREATE TABLE IF NOT EXISTS categories (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   name          VARCHAR(255) NOT NULL UNIQUE,
+  name_en       VARCHAR(255) DEFAULT NULL,
   slug          VARCHAR(255),
   order_index   INT DEFAULT 0,
   status        ENUM('active', 'inactive') DEFAULT 'active',
@@ -123,6 +124,7 @@ CREATE TABLE IF NOT EXISTS sub_categories (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   category_id   INT NOT NULL,
   name          VARCHAR(255) NOT NULL,
+  name_en       VARCHAR(255) DEFAULT NULL,
   slug          VARCHAR(255),
   order_index   INT DEFAULT 0,
   status        ENUM('active', 'inactive') DEFAULT 'active',

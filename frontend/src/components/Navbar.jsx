@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 
-import { CATEGORIES_DATA } from '../constants/categories';
+import { CATEGORIES_DATA, getCategoryLabel } from '../constants/categories';
 
 export const Navbar = () => {
   const { role, user, logout } = useAuth();
@@ -282,18 +282,19 @@ export const Navbar = () => {
                 to={`/posts?category=${encodeURIComponent(cat.name)}`}
                 style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
               >
-                {cat.name} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
+                {getCategoryLabel(cat, currentLang)} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
               </Link>
               <div className="nav-dropdown-menu">
                 {(cat.subcategories || []).map((sub) => {
                   const subName = typeof sub === 'string' ? sub : sub.name;
+                  const subLabel = getCategoryLabel(sub, currentLang);
                   return (
                     <Link 
                       key={subName} 
                       to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(subName)}`}
                       className="nav-dropdown-item"
                     >
-                      {subName}
+                      {subLabel}
                     </Link>
                   );
                 })}
@@ -410,11 +411,12 @@ export const Navbar = () => {
                 onClick={() => setMobileMenuOpen(false)} 
                 style={{ textDecoration: 'none', color: '#0c2340', fontWeight: '700', fontSize: '14px' }}
               >
-                {cat.name}
+                {getCategoryLabel(cat, currentLang)}
               </Link>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '12px' }}>
                 {(cat.subcategories || []).map((sub) => {
                   const subName = typeof sub === 'string' ? sub : sub.name;
+                  const subLabel = getCategoryLabel(sub, currentLang);
                   return (
                     <Link 
                       key={subName}
@@ -422,7 +424,7 @@ export const Navbar = () => {
                       onClick={() => setMobileMenuOpen(false)}
                       style={{ textDecoration: 'none', color: '#475569', fontSize: '12.5px' }}
                     >
-                      • {subName}
+                      • {subLabel}
                     </Link>
                   );
                 })}

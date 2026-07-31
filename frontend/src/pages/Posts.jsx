@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory } from '../constants/categories';
+import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory, getCategoryLabel } from '../constants/categories';
 
 export const Posts = () => {
   const { role, token } = useAuth();
@@ -270,9 +270,9 @@ export const Posts = () => {
               }}
               style={{ padding: '7px 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', boxSizing: 'border-box' }}
             >
-              <option value="">📁 Tất cả chuyên mục</option>
+              <option value="">📁 {currentLang === 'en' ? 'All categories' : 'Tất cả chuyên mục'}</option>
               {categoriesList.map(cat => (
-                <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>
+                <option key={cat.id || cat.name} value={cat.name}>{getCategoryLabel(cat, currentLang)}</option>
               ))}
             </select>
 
@@ -282,12 +282,12 @@ export const Posts = () => {
               onChange={(e) => setSelectedSubCategory(e.target.value)}
               style={{ padding: '7px 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', boxSizing: 'border-box' }}
             >
-              <option value="">🏷️ Tất cả lĩnh vực</option>
+              <option value="">🏷️ {currentLang === 'en' ? 'All sectors' : 'Tất cả lĩnh vực'}</option>
               {(selectedCategory 
                 ? ((categoriesList.find(c => c.name === selectedCategory)?.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
                 : categoriesList.flatMap(c => (c.subcategories || []).map(s => typeof s === 'string' ? s : s.name))
               ).map(subName => (
-                <option key={subName} value={subName}>{subName}</option>
+                <option key={subName} value={subName}>{getCategoryLabel(subName, currentLang)}</option>
               ))}
             </select>
 
@@ -466,12 +466,12 @@ export const Posts = () => {
                         </span>
                         {p.category && (
                           <span style={{ fontSize: '10.5px', color: '#0284c7', backgroundColor: '#e0f2fe', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                            📁 {p.category}
+                            📁 {getCategoryLabel(p.category, currentLang)}
                           </span>
                         )}
                         {p.sub_category && (
                           <span style={{ fontSize: '10.5px', color: '#059669', backgroundColor: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                            🏷️ {p.sub_category}
+                            🏷️ {getCategoryLabel(p.sub_category, currentLang)}
                           </span>
                         )}
                       </div>

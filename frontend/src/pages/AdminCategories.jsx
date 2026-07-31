@@ -13,12 +13,12 @@ export const AdminCategories = () => {
   // Main Category Modal state
   const [catModalOpen, setCatModalOpen] = useState(false);
   const [editingCat, setEditingCat] = useState(null); // null if creating, object if editing
-  const [catForm, setCatForm] = useState({ name: '', order_index: 0, status: 'active' });
+  const [catForm, setCatForm] = useState({ name: '', name_en: '', order_index: 0, status: 'active' });
 
   // Sub Category Modal state
   const [subModalOpen, setSubModalOpen] = useState(false);
   const [editingSub, setEditingSub] = useState(null);
-  const [subForm, setSubForm] = useState({ category_id: null, name: '', order_index: 0, status: 'active' });
+  const [subForm, setSubForm] = useState({ category_id: null, name: '', name_en: '', order_index: 0, status: 'active' });
   const [targetCategoryName, setTargetCategoryName] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -52,13 +52,13 @@ export const AdminCategories = () => {
   // ── HANDLERS CATEGORIES ─────────────────────────────────
   const handleOpenAddCat = () => {
     setEditingCat(null);
-    setCatForm({ name: '', order_index: categories.length + 1, status: 'active' });
+    setCatForm({ name: '', name_en: '', order_index: categories.length + 1, status: 'active' });
     setCatModalOpen(true);
   };
 
   const handleOpenEditCat = (cat) => {
     setEditingCat(cat);
-    setCatForm({ name: cat.name, order_index: cat.order_index || 0, status: cat.status || 'active' });
+    setCatForm({ name: cat.name, name_en: cat.name_en || '', order_index: cat.order_index || 0, status: cat.status || 'active' });
     setCatModalOpen(true);
   };
 
@@ -140,6 +140,7 @@ export const AdminCategories = () => {
     setSubForm({
       category_id: cat.id,
       name: '',
+      name_en: '',
       order_index: (cat.subcategories ? cat.subcategories.length : 0) + 1,
       status: 'active'
     });
@@ -152,6 +153,7 @@ export const AdminCategories = () => {
     setSubForm({
       category_id: sub.category_id,
       name: sub.name,
+      name_en: sub.name_en || '',
       order_index: sub.order_index || 0,
       status: sub.status || 'active'
     });
@@ -436,7 +438,7 @@ export const AdminCategories = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 650, color: '#334155', marginBottom: '4px' }}>
-                    Tên Chuyên mục <span style={{ color: '#EF4444' }}>*</span>
+                    Tên Chuyên mục (Tiếng Việt) <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <input 
                     type="text" 
@@ -445,6 +447,19 @@ export const AdminCategories = () => {
                     placeholder="Ví dụ: Du lịch, Doanh nghiệp..." 
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none' }}
                     required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 650, color: '#334155', marginBottom: '4px' }}>
+                    Tên Tiếng Anh (English Name)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={catForm.name_en} 
+                    onChange={(e) => setCatForm(prev => ({ ...prev, name_en: e.target.value }))}
+                    placeholder="Ví dụ: Tourism, Enterprises..." 
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none' }}
                   />
                 </div>
 
@@ -502,7 +517,7 @@ export const AdminCategories = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 650, color: '#334155', marginBottom: '4px' }}>
-                    Tên Lĩnh vực con <span style={{ color: '#EF4444' }}>*</span>
+                    Tên Lĩnh vực con (Tiếng Việt) <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <input 
                     type="text" 
@@ -511,6 +526,19 @@ export const AdminCategories = () => {
                     placeholder="Ví dụ: Điểm đến nổi bật, Khách sạn & Resort..." 
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none' }}
                     required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 650, color: '#334155', marginBottom: '4px' }}>
+                    Tên Tiếng Anh (English Name)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={subForm.name_en} 
+                    onChange={(e) => setSubForm(prev => ({ ...prev, name_en: e.target.value }))}
+                    placeholder="Ví dụ: Featured Destinations, Accommodations..." 
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none' }}
                   />
                 </div>
 

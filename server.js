@@ -179,6 +179,7 @@ db.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
+        name_en VARCHAR(255) DEFAULT NULL,
         slug VARCHAR(255),
         order_index INT DEFAULT 0,
         status ENUM('active', 'inactive') DEFAULT 'active',
@@ -192,6 +193,7 @@ db.query(`
         id INT AUTO_INCREMENT PRIMARY KEY,
         category_id INT NOT NULL,
         name VARCHAR(255) NOT NULL,
+        name_en VARCHAR(255) DEFAULT NULL,
         slug VARCHAR(255),
         order_index INT DEFAULT 0,
         status ENUM('active', 'inactive') DEFAULT 'active',
@@ -202,46 +204,82 @@ db.query(`
       ) ENGINE=InnoDB COMMENT='Danh mục lĩnh vực con'
     `);
 
+    // Migration bổ sung cột name_en nếu bảng đã tồn tại từ trước
+    const [catCols] = await db.query("SHOW COLUMNS FROM categories LIKE 'name_en'");
+    if (!catCols.length) {
+      await db.query("ALTER TABLE categories ADD COLUMN name_en VARCHAR(255) DEFAULT NULL AFTER name");
+      console.log('✅ Đã thêm cột name_en vào bảng categories');
+    }
+    const [subCategoryTableCols] = await db.query("SHOW COLUMNS FROM sub_categories LIKE 'name_en'");
+    if (!subCategoryTableCols.length) {
+      await db.query("ALTER TABLE sub_categories ADD COLUMN name_en VARCHAR(255) DEFAULT NULL AFTER name");
+      console.log('✅ Đã thêm cột name_en vào bảng sub_categories');
+    }
+
     const [catCount] = await db.query('SELECT COUNT(*) as count FROM categories');
     if (catCount[0].count === 0) {
       console.log('🌱 Đang khởi tạo dữ liệu Chuyên mục & Lĩnh vực mặc định...');
       const defaultCategories = [
         {
-          name: 'Khám phá Đồ Sơn', order: 1,
-          subs: ['Tổng quan Đồ Sơn', 'Lịch sử & Di tích', 'Văn hóa & Lễ hội']
+          name: 'Khám phá Đồ Sơn', name_en: 'Explore Do Son', order: 1,
+          subs: [
+            { vi: 'Tổng quan Đồ Sơn', en: 'Do Son Overview' },
+            { vi: 'Lịch sử & Di tích', en: 'History & Relics' },
+            { vi: 'Văn hóa & Lễ hội', en: 'Culture & Festivals' }
+          ]
         },
         {
-          name: 'Du lịch', order: 2,
-          subs: ['Điểm đến nổi bật', 'Nơi lưu trú & Resort', 'Ẩm thực & Hải sản', 'Lịch trình gợi ý']
+          name: 'Du lịch', name_en: 'Tourism', order: 2,
+          subs: [
+            { vi: 'Điểm đến nổi bật', en: 'Featured Destinations' },
+            { vi: 'Nơi lưu trú & Resort', en: 'Accommodations & Resorts' },
+            { vi: 'Ẩm thực & Hải sản', en: 'Cuisine & Seafood' },
+            { vi: 'Lịch trình gợi ý', en: 'Suggested Itineraries' }
+          ]
         },
         {
-          name: 'Doanh nghiệp', order: 3,
-          subs: ['Danh bạ doanh nghiệp', 'Sản phẩm OCOP tiêu biểu', 'Nhu cầu mua - bán']
+          name: 'Doanh nghiệp', name_en: 'Enterprises', order: 3,
+          subs: [
+            { vi: 'Danh bạ doanh nghiệp', en: 'Business Directory' },
+            { vi: 'Sản phẩm OCOP tiêu biểu', en: 'Featured OCOP Products' },
+            { vi: 'Nhu cầu mua - bán', en: 'Trading Needs' }
+          ]
         },
         {
-          name: 'Đầu tư', order: 4,
-          subs: ['Dự án & Cơ hội hợp tác', 'Lĩnh vực tiềm năng']
+          name: 'Đầu tư', name_en: 'Investment', order: 4,
+          subs: [
+            { vi: 'Dự án & Cơ hội hợp tác', en: 'Projects & Opportunities' },
+            { vi: 'Lĩnh vực tiềm năng', en: 'Potential Sectors' }
+          ]
         },
         {
-          name: 'Cộng đồng', order: 5,
-          subs: ['Người Đồ Sơn xa quê', 'Chuyên gia & Cố vấn', 'CLB Doanh nhân']
+          name: 'Cộng đồng', name_en: 'Community', order: 5,
+          subs: [
+            { vi: 'Người Đồ Sơn xa quê', en: 'Do Son Expatriates' },
+            { vi: 'Chuyên gia & Cố vấn', en: 'Experts & Advisors' },
+            { vi: 'CLB Doanh nhân', en: 'Entrepreneurs Club' }
+          ]
         },
         {
-          name: 'Tin tức - Sự kiện', order: 6,
-          subs: ['Tin tức thời sự', 'Sự kiện & Lễ hội', 'Thông cáo & Hoạt động']
+          name: 'Tin tức - Sự kiện', name_en: 'News & Events', order: 6,
+          subs: [
+            { vi: 'Tin tức thời sự', en: 'Current News' },
+            { vi: 'Sự kiện & Lễ hội', en: 'Events & Festivals' },
+            { vi: 'Thông cáo & Hoạt động', en: 'Press & Activities' }
+          ]
         }
       ];
 
       for (const cat of defaultCategories) {
         const [res] = await db.query(
-          'INSERT INTO categories (name, order_index, status) VALUES (?, ?, "active")',
-          [cat.name, cat.order]
+          'INSERT INTO categories (name, name_en, order_index, status) VALUES (?, ?, ?, "active")',
+          [cat.name, cat.name_en, cat.order]
         );
         const catId = res.insertId;
         for (let i = 0; i < cat.subs.length; i++) {
           await db.query(
-            'INSERT INTO sub_categories (category_id, name, order_index, status) VALUES (?, ?, ?, "active")',
-            [catId, cat.subs[i], i + 1]
+            'INSERT INTO sub_categories (category_id, name, name_en, order_index, status) VALUES (?, ?, ?, ?, "active")',
+            [catId, cat.subs[i].vi, cat.subs[i].en, i + 1]
           );
         }
       }
@@ -1657,14 +1695,14 @@ app.get('/api/admin/categories', authMiddleware, async (req, res) => {
 // Admin API: Thêm Chuyên mục mới
 app.post('/api/admin/categories', authMiddleware, async (req, res) => {
   try {
-    const { name, order_index, status } = req.body;
+    const { name, name_en, order_index, status } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Tên chuyên mục không được trống.' });
     }
 
     const [result] = await db.query(
-      'INSERT INTO categories (name, order_index, status) VALUES (?, ?, ?)',
-      [name.trim(), parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active']
+      'INSERT INTO categories (name, name_en, order_index, status) VALUES (?, ?, ?, ?)',
+      [name.trim(), name_en ? name_en.trim() : null, parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active']
     );
 
     res.json({ success: true, id: result.insertId, message: 'Thêm Chuyên mục thành công.' });
@@ -1679,14 +1717,14 @@ app.post('/api/admin/categories', authMiddleware, async (req, res) => {
 // Admin API: Cập nhật Chuyên mục
 app.put('/api/admin/categories/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, order_index, status } = req.body;
+    const { name, name_en, order_index, status } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Tên chuyên mục không được trống.' });
     }
 
     await db.query(
-      'UPDATE categories SET name = ?, order_index = ?, status = ? WHERE id = ?',
-      [name.trim(), parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active', req.params.id]
+      'UPDATE categories SET name = ?, name_en = ?, order_index = ?, status = ? WHERE id = ?',
+      [name.trim(), name_en ? name_en.trim() : null, parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active', req.params.id]
     );
 
     res.json({ success: true, message: 'Cập nhật Chuyên mục thành công.' });
@@ -1723,7 +1761,7 @@ app.delete('/api/admin/categories/:id', authMiddleware, async (req, res) => {
 // Admin API: Thêm Lĩnh vực con mới
 app.post('/api/admin/sub-categories', authMiddleware, async (req, res) => {
   try {
-    const { category_id, name, order_index, status } = req.body;
+    const { category_id, name, name_en, order_index, status } = req.body;
     if (!category_id) {
       return res.status(400).json({ success: false, error: 'Thiếu ID chuyên mục cha.' });
     }
@@ -1732,8 +1770,8 @@ app.post('/api/admin/sub-categories', authMiddleware, async (req, res) => {
     }
 
     const [result] = await db.query(
-      'INSERT INTO sub_categories (category_id, name, order_index, status) VALUES (?, ?, ?, ?)',
-      [category_id, name.trim(), parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active']
+      'INSERT INTO sub_categories (category_id, name, name_en, order_index, status) VALUES (?, ?, ?, ?, ?)',
+      [category_id, name.trim(), name_en ? name_en.trim() : null, parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active']
     );
 
     res.json({ success: true, id: result.insertId, message: 'Thêm Lĩnh vực con thành công.' });
@@ -1745,14 +1783,14 @@ app.post('/api/admin/sub-categories', authMiddleware, async (req, res) => {
 // Admin API: Cập nhật Lĩnh vực con
 app.put('/api/admin/sub-categories/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, order_index, status } = req.body;
+    const { name, name_en, order_index, status } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Tên lĩnh vực con không được trống.' });
     }
 
     await db.query(
-      'UPDATE sub_categories SET name = ?, order_index = ?, status = ? WHERE id = ?',
-      [name.trim(), parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active', req.params.id]
+      'UPDATE sub_categories SET name = ?, name_en = ?, order_index = ?, status = ? WHERE id = ?',
+      [name.trim(), name_en ? name_en.trim() : null, parseInt(order_index) || 0, status === 'inactive' ? 'inactive' : 'active', req.params.id]
     );
 
     res.json({ success: true, message: 'Cập nhật Lĩnh vực con thành công.' });
