@@ -5,6 +5,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingAIBot from '../components/FloatingAIBot';
+import InteractiveMap from '../components/InteractiveMap';
 
 export const Home = () => {
   const { role, token } = useAuth();
@@ -195,75 +196,6 @@ export const Home = () => {
       }
     };
     fetchFeaturedMembers();
-  }, []);
-
-  // Leaflet Map Initialization
-  useEffect(() => {
-    const initLeafletMap = () => {
-      if (!mapContainerRef.current || mapInstanceRef.current) return;
-
-      const L = window.L;
-      if (!L) return;
-
-      const map = L.map(mapContainerRef.current).setView([20.7077, 106.7865], 13);
-      mapInstanceRef.current = map;
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }).addTo(map);
-
-      fetch('/Đồ Sơn.geojson')
-        .then(res => res.json())
-        .then(geojson => {
-          L.geoJSON(geojson, {
-            style: {
-              color: '#0284c7',
-              weight: 3,
-              opacity: 0.8,
-              fillColor: '#38bdf8',
-              fillOpacity: 0.15
-            }
-          }).addTo(map);
-        })
-        .catch(err => console.log('GeoJSON load note:', err));
-
-      const locations = [
-        { name: "Khu du lịch Đồi Rồng (Dragon Ocean)", lat: 20.695, lng: 106.772, category: "stay", desc: "Resort & Công viên nước" },
-        { name: "Đảo Hòn Dấu & Ngọn Hải Đăng", lat: 20.669, lng: 106.814, category: "attractions", desc: "Di tích & Danh thắng" },
-        { name: "Bến K15 - Tàu Không Số", lat: 20.676, lng: 106.808, category: "attractions", desc: "Di tích Lịch sử Quốc gia" },
-        { name: "Biệt thự Bảo Đại", lat: 20.686, lng: 106.795, category: "attractions", desc: "Điểm tham quan lịch sử" },
-        { name: "Nhà hàng Hải Sản Vạn Hương", lat: 20.688, lng: 106.785, category: "food", desc: "Hải sản tươi sống Đồ Sơn" },
-        { name: "HTX Táo Bàng Đồ Sơn", lat: 20.720, lng: 106.765, category: "ocop", desc: "Đặc sản OCOP 4 sao" }
-      ];
-
-      locations.forEach(loc => {
-        const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-        marker.bindPopup(`<b>${loc.name}</b><br/>${loc.desc}`);
-      });
-    };
-
-    if (window.L) {
-      initLeafletMap();
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => initLeafletMap();
-      document.body.appendChild(script);
-    }
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
   }, []);
 
   const openEventDetail = (event) => {
@@ -1217,53 +1149,9 @@ export const Home = () => {
           </div>
         </section>
 
-        {/* BLOCK 13: Interactive Leaflet Digital Map (2-Row Title) */}
+        {/* BLOCK 13: Interactive Leaflet Digital Map */}
         <section id="map" style={{ marginBottom: '4rem' }}>
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '1.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-              <div>
-                <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0284c7', textTransform: 'uppercase', marginBottom: '4px' }}>
-                  {t('map_badge')}
-                </span>
-                <h2 style={{ ...gradientTitleStyle, fontSize: '24px', fontWeight: '800' }}>
-                  {t('map_title')}
-                </h2>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => alert('GPS location enabled')} style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>📍 {t('map_gps_btn')}</button>
-                <button onClick={() => navigate('/ai-chat')} style={{ backgroundColor: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🤖 {t('map_ask_ai_btn')}</button>
-              </div>
-            </div>
-
-            {/* Category Filters */}
-            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '1rem' }}>
-              {['all', 'attractions', 'stay', 'food', 'biz', 'ocop', 'utilities'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setMapCategory(cat)}
-                  style={{
-                    backgroundColor: mapCategory === cat ? '#0284c7' : '#f1f5f9',
-                    color: mapCategory === cat ? '#ffffff' : '#334155',
-                    border: 'none',
-                    borderRadius: '20px',
-                    padding: '6px 14px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {t(`map_filter_${cat}`)}
-                </button>
-              ))}
-            </div>
-
-            {/* Leaflet Map Canvas */}
-            <div 
-              ref={mapContainerRef} 
-              style={{ width: '100%', height: '420px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #cbd5e1', zIndex: 1 }}
-            />
-          </div>
+          <InteractiveMap />
         </section>
 
         {/* BLOCK 14: Ecosystem Roles (2-Row Title) */}
