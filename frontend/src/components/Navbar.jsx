@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 
+import { CATEGORIES_DATA } from '../constants/categories';
+
 export const Navbar = () => {
   const { role, user, logout } = useAuth();
   const { currentLang, changeLang, t, getLangDetails, LANGS } = useTranslation();
@@ -245,75 +247,38 @@ export const Navbar = () => {
           </div>
         </Link>
 
-        {/* Navigation Submenus - 1 Single Line Row (No Wrap, Compact Gaps) */}
+        {/* Navigation Submenus - 6 Chuyên mục chính & các Lĩnh vực con */}
         <div 
           className="nav-links" 
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 'clamp(0.5rem, 1.5vw, 1rem)', 
+            gap: 'clamp(0.4rem, 1.2vw, 0.85rem)', 
             flexWrap: 'nowrap',
             whiteSpace: 'nowrap'
           }}
         >
-          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap' }}>
-              {t('nav_explore')} <i className="ti ti-chevron-down" style={{ fontSize: '10px', marginLeft: '2px' }}></i>
-            </span>
-            <div className="nav-dropdown-menu">
-              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Tổng quan Đồ Sơn</a>
-              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Lịch sử & Di tích</a>
-              <a href="#explore" onClick={(e) => handleAnchorClick(e, '#explore')} className="nav-dropdown-item">Văn hóa & Lễ hội</a>
+          {CATEGORIES_DATA.map((cat) => (
+            <div key={cat.id} className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <Link
+                to={`/posts?category=${encodeURIComponent(cat.name)}`}
+                style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+              >
+                {cat.name} <i className="ti ti-chevron-down" style={{ fontSize: '10px' }}></i>
+              </Link>
+              <div className="nav-dropdown-menu">
+                {cat.subcategories.map((sub) => (
+                  <Link 
+                    key={sub} 
+                    to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(sub)}`}
+                    className="nav-dropdown-item"
+                  >
+                    {sub}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap' }}>
-              {t('nav_tourism')} <i className="ti ti-chevron-down" style={{ fontSize: '10px', marginLeft: '2px' }}></i>
-            </span>
-            <div className="nav-dropdown-menu">
-              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Điểm đến nổi bật</a>
-              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Nơi lưu trú & Resort</a>
-              <a href="#tourism" onClick={(e) => handleAnchorClick(e, '#tourism')} className="nav-dropdown-item">Ẩm thực & Hải sản</a>
-              <a href="#itinerary" onClick={(e) => handleAnchorClick(e, '#itinerary')} className="nav-dropdown-item">Lịch trình gợi ý</a>
-            </div>
-          </div>
-
-          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap' }}>
-              {t('nav_business')} <i className="ti ti-chevron-down" style={{ fontSize: '10px', marginLeft: '2px' }}></i>
-            </span>
-            <div className="nav-dropdown-menu">
-              <Link to="/members" className="nav-dropdown-item">Danh bạ doanh nghiệp</Link>
-              <a href="#showroom" onClick={(e) => handleAnchorClick(e, '#showroom')} className="nav-dropdown-item">Sản phẩm OCOP tiêu biểu</a>
-              <Link to="/posts" className="nav-dropdown-item">Nhu cầu mua - bán</Link>
-            </div>
-          </div>
-
-          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap' }}>
-              {t('nav_investment')} <i className="ti ti-chevron-down" style={{ fontSize: '10px', marginLeft: '2px' }}></i>
-            </span>
-            <div className="nav-dropdown-menu">
-              <a href="#investment" onClick={(e) => handleAnchorClick(e, '#investment')} className="nav-dropdown-item">Dự án & Cơ hội hợp tác</a>
-              <a href="#investment" onClick={(e) => handleAnchorClick(e, '#investment')} className="nav-dropdown-item">Lĩnh vực tiềm năng</a>
-            </div>
-          </div>
-
-          <div className="nav-link nav-dropdown" style={{ position: 'relative', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', whiteSpace: 'nowrap' }}>
-              {t('nav_community')} <i className="ti ti-chevron-down" style={{ fontSize: '10px', marginLeft: '2px' }}></i>
-            </span>
-            <div className="nav-dropdown-menu">
-              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">Người Đồ Sơn xa quê</a>
-              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">Chuyên gia & Cố vấn</a>
-              <a href="#community" onClick={(e) => handleAnchorClick(e, '#community')} className="nav-dropdown-item">CLB Doanh nhân</a>
-            </div>
-          </div>
-
-          <Link to="/events" className="nav-link" style={{ fontWeight: '600', color: '#1e293b', fontSize: '13px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            {t('nav_news')}
-          </Link>
+          ))}
 
           <Link 
             to="/ai-chat" 
@@ -412,16 +377,35 @@ export const Navbar = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: '0.75rem',
+            maxHeight: '70vh',
+            overflowY: 'auto',
             boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
           }}
         >
-          <a href="#explore" onClick={(e) => { handleAnchorClick(e, '#explore'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_explore')}</a>
-          <a href="#tourism" onClick={(e) => { handleAnchorClick(e, '#tourism'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_tourism')}</a>
-          <Link to="/members" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_business')}</Link>
-          <a href="#investment" onClick={(e) => { handleAnchorClick(e, '#investment'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_investment')}</a>
-          <a href="#community" onClick={(e) => { handleAnchorClick(e, '#community'); setMobileMenuOpen(false); }} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_community')}</a>
-          <Link to="/events" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#1e293b', fontWeight: '600' }}>{t('nav_news')}</Link>
-          <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#0284c7', fontWeight: '700' }}>{t('nav_ai')}</Link>
+          {CATEGORIES_DATA.map((cat) => (
+            <div key={cat.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <Link 
+                to={`/posts?category=${encodeURIComponent(cat.name)}`} 
+                onClick={() => setMobileMenuOpen(false)} 
+                style={{ textDecoration: 'none', color: '#0c2340', fontWeight: '700', fontSize: '14px' }}
+              >
+                {cat.name}
+              </Link>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '12px' }}>
+                {cat.subcategories.map(sub => (
+                  <Link 
+                    key={sub}
+                    to={`/posts?category=${encodeURIComponent(cat.name)}&sub_category=${encodeURIComponent(sub)}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ textDecoration: 'none', color: '#475569', fontSize: '12.5px' }}
+                  >
+                    • {sub}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+          <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#0284c7', fontWeight: '700', marginTop: '6px' }}>{t('nav_ai')}</Link>
         </div>
       )}
     </header>

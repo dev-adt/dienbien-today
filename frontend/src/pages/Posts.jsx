@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory } from '../constants/categories';
 
 export const Posts = () => {
   const { role, token } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentLang, t } = useTranslation();
 
   const [posts, setPosts] = useState([]);
@@ -18,7 +20,17 @@ export const Posts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedSubCategory, setSelectedSubCategory] = useState(searchParams.get('sub_category') || '');
+
+  // Lắng nghe sự thay đổi query params từ URL
+  useEffect(() => {
+    const cat = searchParams.get('category') || '';
+    const subCat = searchParams.get('sub_category') || '';
+    setSelectedCategory(cat);
+    setSelectedSubCategory(subCat);
+  }, [searchParams]);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage, setPostsPerPage] = useState(10);
@@ -75,8 +87,10 @@ export const Posts = () => {
       
     const matchesTier = !selectedTier || p.company_tier === selectedTier;
     const matchesType = !selectedType || p.type === selectedType;
+    const matchesCategory = !selectedCategory || p.category === selectedCategory;
+    const matchesSubCategory = !selectedSubCategory || p.sub_category === selectedSubCategory;
     
-    return matchesSearch && matchesTier && matchesType;
+    return matchesSearch && matchesTier && matchesType && matchesCategory && matchesSubCategory;
   });
 
   // Sort featured posts to the top of the main listing
@@ -89,7 +103,7 @@ export const Posts = () => {
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedTier, selectedType]);
+  }, [searchQuery, selectedTier, selectedType, selectedCategory, selectedSubCategory]);
 
   // Pagination index calculations
   const indexOfLastPost = currentPage * postsPerPage;
@@ -226,6 +240,34 @@ export const Posts = () => {
               />
             </div>
 
+            {/* Filter by Category (Chuyên mục) */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                const cat = e.target.value;
+                setSelectedCategory(cat);
+                setSelectedSubCategory(''); // Reset Lĩnh vực khi đổi Chuyên mục
+              }}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '150px' }}
+            >
+              <option value="">Tất cả chuyên mục</option>
+              {ALL_CATEGORIES.map(catName => (
+                <option key={catName} value={catName}>{catName}</option>
+              ))}
+            </select>
+
+            {/* Filter by SubCategory (Lĩnh vực) */}
+            <select
+              value={selectedSubCategory}
+              onChange={(e) => setSelectedSubCategory(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12.5px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer', minWidth: '160px' }}
+            >
+              <option value="">Tất cả lĩnh vực</option>
+              {(selectedCategory ? getSubcategoriesByCategory(selectedCategory) : CATEGORIES_DATA.flatMap(c => c.subcategories)).map(subName => (
+                <option key={subName} value={subName}>{subName}</option>
+              ))}
+            </select>
+
             {/* Filter by Tier */}
             <select
               value={selectedTier}
@@ -358,7 +400,14 @@ export const Posts = () => {
                           {p.type === 'offer' ? t('type_offer_short') : p.type === 'demand' ? t('type_demand_short') : t('type_cooperate_short')}
                         </span>
                         {p.category && (
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.category}</span>
+                          <span style={{ fontSize: '10.5px', color: '#0284c7', backgroundColor: '#e0f2fe', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                            📁 {p.category}
+                          </span>
+                        )}
+                        {p.sub_category && (
+                          <span style={{ fontSize: '10.5px', color: '#059669', backgroundColor: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                            🏷️ {p.sub_category}
+                          </span>
                         )}
                       </div>
                     </div>

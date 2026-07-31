@@ -129,6 +129,13 @@ db.query(`
       console.log('✅ Đã thêm cột is_featured vào bảng posts');
     }
 
+    // Thêm cột sub_category vào bảng posts để lưu Lĩnh vực con
+    const [subCatCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'sub_category'");
+    if (!subCatCols.length) {
+      await db.query("ALTER TABLE posts ADD COLUMN sub_category VARCHAR(100) DEFAULT NULL AFTER category");
+      console.log('✅ Đã thêm cột sub_category vào bảng posts');
+    }
+
     // Thêm cột featured_requested vào bảng posts để Platinum yêu cầu ghim bài nổi bật
     const [featuredRequestedCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'featured_requested'");
     if (!featuredRequestedCols.length) {
@@ -1270,7 +1277,7 @@ app.delete('/api/admin/members/:id', authMiddleware, async (req, res) => {
 app.get('/api/posts', async (req, res) => {
   try {
     await cleanupExpiredTiers();
-    const { status, member_id, search } = req.query;
+    const { status, member_id, search, category, sub_category } = req.query;
 
     // Kiểm tra quyền truy cập
     let isAuthenticated = false;
@@ -1291,9 +1298,11 @@ app.get('/api/posts', async (req, res) => {
                FROM posts p LEFT JOIN members m ON p.member_id = m.id WHERE 1=1`;
     const params = [];
 
-    if (status)    { sql += ' AND p.status = ?';     params.push(status); }
-    if (member_id) { sql += ' AND p.member_id = ?';  params.push(member_id); }
-    if (search)    { sql += ' AND MATCH(p.title,p.summary,p.body) AGAINST(? IN BOOLEAN MODE)'; params.push(`*${search}*`); }
+    if (status)       { sql += ' AND p.status = ?';       params.push(status); }
+    if (member_id)    { sql += ' AND p.member_id = ?';    params.push(member_id); }
+    if (category)     { sql += ' AND p.category = ?';     params.push(category); }
+    if (sub_category) { sql += ' AND p.sub_category = ?'; params.push(sub_category); }
+    if (search)       { sql += ' AND MATCH(p.title,p.summary,p.body) AGAINST(? IN BOOLEAN MODE)'; params.push(`*${search}*`); }
     sql += ' ORDER BY p.created_at DESC';
 
     const [rows] = await db.query(sql, params);
@@ -1332,8 +1341,10 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
       }
     }
 
-    const { title, summary, body, type, category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
+    const { title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
     if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
+    if (!category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Chuyên mục cho bài viết.' });
+    if (!sub_category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Lĩnh vực cho bài viết.' });
 
     // Chỉ hội viên Platinum mới được phép gửi yêu cầu ghim bài nổi bật ngoài trang chủ
     const isPlatinum = req.member.tier === 'Platinum';
@@ -1342,9 +1353,9 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
     const finalStatus = isDraft ? 'draft' : 'pending';
 
     const [result] = await db.query(
-      `INSERT INTO posts (member_id, title, summary, body, type, category, tags, contact_info, deadline, image_url, status, featured_requested)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [req.member.id, title, summary, body, type, category, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
+      `INSERT INTO posts (member_id, title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, status, featured_requested)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.member.id, title, summary, body, type, category, sub_category, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
     );
     res.json({ success: true, id: result.insertId, message: isDraft ? 'Đã lưu bản nháp.' : 'Bài viết đã gửi để admin duyệt.' });
   } catch (err) {
@@ -1386,8 +1397,10 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Bạn không có quyền chỉnh sửa bài đăng này.' });
     }
 
-    const { title, summary, body, type, category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
+    const { title, summary, body, type, category, sub_category, tags, contact_info, deadline, image_url, isDraft, featured_requested } = req.body;
     if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
+    if (!category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Chuyên mục cho bài viết.' });
+    if (!sub_category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Lĩnh vực cho bài viết.' });
 
     // Chỉ hội viên Platinum mới được phép gửi yêu cầu ghim bài nổi bật ngoài trang chủ
     const isPlatinum = req.member.tier === 'Platinum';
@@ -1398,12 +1411,12 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
 
     await db.query(
       `UPDATE posts SET 
-        title = ?, summary = ?, body = ?, type = ?, category = ?, 
+        title = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?,
         tags = ?, contact_info = ?, deadline = ?, image_url = ?, status = ?,
         featured_requested = ?
        WHERE id = ?`,
       [
-        title, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', 
+        title, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', sub_category || '',
         JSON.stringify(tags || []), contact_info || '', deadline || null, image_url || null, 
         finalStatus, isFeaturedRequested, postId
       ]

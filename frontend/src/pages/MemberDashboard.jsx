@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import RichTextEditor from '../components/RichTextEditor';
 import { useTranslation } from '../contexts/LanguageContext';
+import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory } from '../constants/categories';
 
 export const MemberDashboard = () => {
   const { user, token, getAuthHeaders, logout } = useAuth();
@@ -49,7 +50,7 @@ export const MemberDashboard = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
     title: '', summary: '', body: '', type: 'Tìm kiếm đối tác',
-    category: '', tags: '', contact_info: '', deadline: '',
+    category: '', sub_category: '', tags: '', contact_info: '', deadline: '',
     image_url: '', featured_requested: 0
   });
   const [creatingPost, setCreatingPost] = useState(false);
@@ -283,6 +284,7 @@ export const MemberDashboard = () => {
             body: p.body || '',
             type: p.type || t('type_find_partner'),
             category: p.category || '',
+            sub_category: p.sub_category || '',
             tags: parsedTags,
             contact_info: p.contact_info || '',
             deadline: formattedDeadline,
@@ -304,6 +306,14 @@ export const MemberDashboard = () => {
   const handleSubmitAction = async (isDraft) => {
     if (!newPostData.title) {
       alert(t('alert_enter_title'));
+      return;
+    }
+    if (!newPostData.category) {
+      alert('Vui lòng chọn Chuyên mục cho bài viết (bắt buộc).');
+      return;
+    }
+    if (!newPostData.sub_category) {
+      alert('Vui lòng chọn Lĩnh vực cho bài viết (bắt buộc).');
       return;
     }
     if (!newPostData.body) {
@@ -346,7 +356,7 @@ export const MemberDashboard = () => {
       setEditingPostId(null);
       setNewPostData({
         title: '', summary: '', body: '', type: t('type_find_partner'),
-        category: '', tags: '', contact_info: '', deadline: '', image_url: '',
+        category: '', sub_category: '', tags: '', contact_info: '', deadline: '', image_url: '',
         featured_requested: 0
       });
       loadDashboardData();
@@ -407,7 +417,7 @@ export const MemberDashboard = () => {
                 setEditingPostId(null);
                 setNewPostData({
                   title: '', summary: '', body: '', type: t('type_find_partner'),
-                  category: '', tags: '', contact_info: '', deadline: '', image_url: ''
+                  category: '', sub_category: '', tags: '', contact_info: '', deadline: '', image_url: ''
                 });
                 setModalOpen(true);
               }}
@@ -821,6 +831,42 @@ export const MemberDashboard = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="fg">
+                    <label>Chuyên mục <span style={{ color: 'var(--rose)' }}>*</span></label>
+                    <select 
+                      id="category" 
+                      value={newPostData.category} 
+                      onChange={(e) => {
+                        const cat = e.target.value;
+                        setNewPostData(prev => ({ ...prev, category: cat, sub_category: '' }));
+                      }}
+                      required
+                    >
+                      <option value="">-- Chọn Chuyên mục --</option>
+                      {ALL_CATEGORIES.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="fg">
+                    <label>Lĩnh vực <span style={{ color: 'var(--rose)' }}>*</span></label>
+                    <select 
+                      id="sub_category" 
+                      value={newPostData.sub_category} 
+                      onChange={(e) => setNewPostData(prev => ({ ...prev, sub_category: e.target.value }))}
+                      disabled={!newPostData.category}
+                      required
+                    >
+                      <option value="">-- Chọn Lĩnh vực --</option>
+                      {getSubcategoriesByCategory(newPostData.category).map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="fg">
                     <label>{t('modal_post_type_label')}</label>
                     <select id="type" value={newPostData.type} onChange={handleNewPostChange}>
                       <option value="Tìm kiếm đối tác">{t('type_find_partner')}</option>
@@ -829,15 +875,11 @@ export const MemberDashboard = () => {
                       <option value="Tuyển dụng">{t('type_recruitment')}</option>
                     </select>
                   </div>
-                  <div className="fg">
-                    <label>{t('modal_post_category_label')}</label>
-                    <input type="text" id="category" value={newPostData.category} onChange={handleNewPostChange} placeholder={t('modal_post_category_placeholder')} />
-                  </div>
-                </div>
 
-                <div className="fg">
-                  <label>{t('modal_post_tags_label')}</label>
-                  <input type="text" id="tags" value={newPostData.tags} onChange={handleNewPostChange} placeholder={t('modal_post_tags_placeholder')} />
+                  <div className="fg">
+                    <label>{t('modal_post_tags_label')}</label>
+                    <input type="text" id="tags" value={newPostData.tags} onChange={handleNewPostChange} placeholder={t('modal_post_tags_placeholder')} />
+                  </div>
                 </div>
 
                 <div className="fg">
