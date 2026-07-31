@@ -37,16 +37,17 @@ export const AIChat = () => {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
   };
 
-  // Tải cấu hình AI hiển thị
+  const [configLoaded, setConfigLoaded] = useState(false);
+
+  // Tải cấu hình AI hiển thị từ DB Admin
   useEffect(() => {
-    if (role === 'guest') return;
+    let isMounted = true;
 
     const loadConfig = async () => {
       try {
-        const res = await fetch('/api/admin/get-config', {
-          headers: getAuthHeaders()
-        });
-        if (res.ok) {
+        const headers = token ? getAuthHeaders() : {};
+        const res = await fetch('/api/admin/get-config', { headers });
+        if (res.ok && isMounted) {
           const data = await res.json();
           const providerNames = { anthropic: 'Anthropic', openai: 'OpenAI', gemini: 'Gemini', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
           const defaultModels = {
@@ -65,9 +66,17 @@ export const AIChat = () => {
         }
       } catch (e) {
         console.error("Failed to load AI config in chat", e);
+      } finally {
+        if (isMounted) {
+          setConfigLoaded(true);
+        }
       }
     };
     loadConfig();
+
+    return () => {
+      isMounted = false;
+    };
   }, [role, token]);
 
   // Tải danh sách session
@@ -216,7 +225,7 @@ export const AIChat = () => {
     const params = new URLSearchParams(location.search);
     const initialQuery = params.get('q');
 
-    if (initialQuery && initialQuery.trim() && !autoSentRef.current) {
+    if (initialQuery && initialQuery.trim() && !autoSentRef.current && configLoaded) {
       autoSentRef.current = true;
       const newSessionId = generateUUID();
       setCurrentSessionId(newSessionId);
@@ -225,9 +234,9 @@ export const AIChat = () => {
       // Auto-trigger send after brief state initialization
       setTimeout(() => {
         handleSend(initialQuery.trim(), newSessionId);
-      }, 150);
+      }, 50);
     }
-  }, [location.search]);
+  }, [location.search, configLoaded]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
