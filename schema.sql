@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS posts (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   member_id     INT NOT NULL COMMENT 'ID hội viên đăng bài',
   title         VARCHAR(500) NOT NULL COMMENT 'Tiêu đề bài viết',
+  slug          VARCHAR(550) DEFAULT NULL COMMENT 'URL Slug thân thiện SEO',
   summary       TEXT         COMMENT 'Tóm tắt',
   body          LONGTEXT     COMMENT 'Nội dung chi tiết',
   type          VARCHAR(100) COMMENT 'Loại bài (Tìm đối tác, Sự kiện...)',
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS posts (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
   INDEX idx_status (status),
   INDEX idx_member (member_id),
+  INDEX idx_slug (slug),
   FULLTEXT idx_search (title, summary, body)
 ) ENGINE=InnoDB COMMENT='Bài viết của hội viên';
 

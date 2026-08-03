@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEOHead from '../components/SEOHead';
 
 export const PostDetail = () => {
   const { id } = useParams();
@@ -256,8 +257,47 @@ export const PostDetail = () => {
   const isPlatinum = post.company_tier === 'Platinum';
   const isGold = post.company_tier === 'Gold';
 
+  const plainBodyText = post.body ? post.body.replace(/<[^>]+>/g, '').substring(0, 220) : '';
+  const metaDescription = isTranslated ? (translatedSummary || plainBodyText) : (post.summary || plainBodyText || post.title);
+
+  // Generate NewsArticle JSON-LD schema
+  const newsSchema = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": isTranslated ? translatedTitle : post.title,
+    "image": [imgUrl],
+    "datePublished": post.created_at || post.published_at,
+    "dateModified": post.updated_at || post.created_at,
+    "author": [{
+      "@type": "Organization",
+      "name": post.company_name || "Đồ Sơn Today Member"
+    }],
+    "publisher": {
+      "@type": "Organization",
+      "name": "Đồ Sơn Today",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://doson.today/assets/logo.png"
+      }
+    },
+    "description": metaDescription
+  };
+
   return (
     <div className="public-body" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEOHead 
+        title={isTranslated ? translatedTitle : post.title}
+        description={metaDescription}
+        keywords={`${post.category || ''}, ${post.sub_category || ''}, Đồ Sơn, Hải Phòng, ${post.title}`}
+        image={imgUrl}
+        url={`/posts/${post.slug || post.id}`}
+        type="article"
+        publishedAt={post.created_at}
+        updatedAt={post.updated_at}
+        author={post.company_name}
+        schemaData={newsSchema}
+      />
+
       <Navbar />
 
       <main style={{ flex: 1, padding: '2.5rem 1.5rem 5rem' }}>

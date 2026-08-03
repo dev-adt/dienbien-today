@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEOHead from '../components/SEOHead';
 import { useTranslation } from '../contexts/LanguageContext';
 
 const GUIDE_CONTENT = {
@@ -484,6 +485,12 @@ export const Guide = () => {
 
   return (
     <div className="public-body">
+      <SEOHead 
+        title="Hướng dẫn sử dụng & Tài liệu Đồ Sơn Today"
+        description="Tài liệu hướng dẫn đăng ký tài khoản doanh nghiệp, đăng tin bài viết B2B, quản lý hồ sơ và ứng dụng Trợ lý AI kết nối giao thương."
+        keywords="hướng dẫn đăng ký, quy trình phê duyệt, tài liệu doanh nghiệp Đồ Sơn, hỗ trợ hội viên"
+        url="/guide"
+      />
       <Navbar />
 
       {/* Background gradient decorative elements */}

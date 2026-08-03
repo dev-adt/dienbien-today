@@ -41,6 +41,41 @@ if (process.env.SMTP_HOST) {
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// Helper tạo URL slug chuẩn SEO từ chuỗi tiếng Việt
+function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-z0-9 -]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// Helper sinh URL slug duy nhất cho bài viết
+async function generateUniquePostSlug(title, postId = null) {
+  let baseSlug = slugify(title) || 'bai-viet';
+  let slug = baseSlug;
+  let count = 1;
+  while (true) {
+    let query = 'SELECT id FROM posts WHERE slug = ?';
+    let params = [slug];
+    if (postId) {
+      query += ' AND id != ?';
+      params.push(postId);
+    }
+    const [rows] = await db.query(query, params);
+    if (!rows.length) break;
+    count++;
+    slug = `${baseSlug}-${count}`;
+  }
+  return slug;
+}
+
 // Helper đọc API key động từ config.json hoặc file .env
 function getAPIKey(provider) {
   const configPath = path.join(__dirname, 'config.json');
@@ -141,6 +176,24 @@ db.query(`
     if (!sourceUrlCols.length) {
       await db.query("ALTER TABLE posts ADD COLUMN source_url VARCHAR(500) DEFAULT NULL AFTER sub_category");
       console.log('✅ Đã thêm cột source_url vào bảng posts');
+    }
+
+    // Migration bổ sung cột slug vào bảng posts và tự động backfill slug cho bài viết đã có
+    const [slugCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'slug'");
+    if (!slugCols.length) {
+      await db.query("ALTER TABLE posts ADD COLUMN slug VARCHAR(550) DEFAULT NULL AFTER title, ADD INDEX idx_slug (slug)");
+      console.log('✅ Đã thêm cột slug và index idx_slug vào bảng posts');
+    }
+
+    // Tự động tạo URL slug SEO cho bài viết hiện chưa có slug
+    const [missingSlugPosts] = await db.query("SELECT id, title FROM posts WHERE slug IS NULL OR slug = ''");
+    if (missingSlugPosts && missingSlugPosts.length > 0) {
+      for (const p of missingSlugPosts) {
+        let baseSlug = slugify(p.title) || `post-${p.id}`;
+        let uniqueSlug = `${baseSlug}-${p.id}`;
+        await db.query("UPDATE posts SET slug = ? WHERE id = ?", [uniqueSlug, p.id]);
+      }
+      console.log(`✅ Đã tự động tạo URL slug SEO cho ${missingSlugPosts.length} bài viết hiện có.`);
     }
 
     // Thêm cột featured_requested vào bảng posts để Platinum yêu cầu ghim bài nổi bật
@@ -1470,29 +1523,37 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
     const isFeaturedRequested = isPlatinum ? (featured_requested ? 1 : 0) : 0;
 
     const finalStatus = isDraft ? 'draft' : 'pending';
+    const slug = await generateUniquePostSlug(title);
 
     const [result] = await db.query(
-      `INSERT INTO posts (member_id, title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [req.member.id, title, summary, body, type, category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
+      `INSERT INTO posts (member_id, title, slug, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.member.id, title, slug, summary, body, type, category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
     );
-    res.json({ success: true, id: result.insertId, message: isDraft ? 'Đã lưu bản nháp.' : 'Bài viết đã gửi để admin duyệt.' });
+    res.json({ success: true, id: result.insertId, slug, message: isDraft ? 'Đã lưu bản nháp.' : 'Bài viết đã gửi để admin duyệt.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Lấy chi tiết 1 bài đăng
+// Lấy chi tiết 1 bài đăng (hỗ trợ truy vấn theo ID hoặc Slug)
 app.get('/api/posts/:id', async (req, res) => {
   try {
+    const identifier = req.params.id;
+    const isNumeric = /^\d+$/.test(identifier);
+
     // Tự động tăng lượt xem thêm 1
-    await db.query("UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE id = ?", [req.params.id]);
+    if (isNumeric) {
+      await db.query("UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE id = ?", [identifier]);
+    } else {
+      await db.query("UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE slug = ?", [identifier]);
+    }
 
     const [rows] = await db.query(
       `SELECT p.*, m.name AS company_name, m.tier AS company_tier 
        FROM posts p LEFT JOIN members m ON p.member_id = m.id 
-       WHERE p.id = ?`,
-      [req.params.id]
+       WHERE p.id = ? OR p.slug = ?`,
+      [identifier, identifier]
     );
     if (!rows.length) return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết.' });
     res.json({ success: true, data: rows[0] });
@@ -1527,24 +1588,75 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
 
     // Trạng thái sau chỉnh sửa: lưu nháp -> 'draft', đăng tin -> 'pending' (yêu cầu duyệt lại)
     const finalStatus = isDraft ? 'draft' : 'pending';
+    const slug = await generateUniquePostSlug(title, postId);
 
     await db.query(
       `UPDATE posts SET 
-        title = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?, source_url = ?,
+        title = ?, slug = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?, source_url = ?,
         tags = ?, contact_info = ?, deadline = ?, image_url = ?, status = ?,
         featured_requested = ?
        WHERE id = ?`,
       [
-        title, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', sub_category || '', source_url || null,
+        title, slug, summary || '', body || '', type || 'Tìm kiếm đối tác', category || '', sub_category || '', source_url || null,
         JSON.stringify(tags || []), contact_info || '', deadline || null, image_url || null, 
         finalStatus, isFeaturedRequested, postId
       ]
     );
 
-    res.json({ success: true, message: 'Cập nhật bài viết thành công.' });
+    res.json({ success: true, slug, message: 'Cập nhật bài viết thành công.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// ════════════════════════════════════════════
+// SEO ENDPOINTS (Sitemap.xml & Robots.txt)
+// ════════════════════════════════════════════
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = process.env.SITE_URL || 'https://doson.today';
+    const staticPages = ['', '/posts', '/members', '/events', '/guide', '/register'];
+
+    const [approvedPosts] = await db.query(
+      "SELECT id, slug, updated_at, created_at FROM posts WHERE status = 'approved' ORDER BY updated_at DESC"
+    );
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    for (const page of staticPages) {
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}${page}</loc>\n`;
+      xml += `    <changefreq>daily</changefreq>\n`;
+      xml += `    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    for (const p of approvedPosts) {
+      const lastMod = (p.updated_at || p.created_at || new Date()).toISOString().split('T')[0];
+      const postSlug = p.slug || p.id;
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/posts/${postSlug}</loc>\n`;
+      xml += `    <lastmod>${lastMod}</lastmod>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.7</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+app.get('/robots.txt', (req, res) => {
+  const baseUrl = process.env.SITE_URL || 'https://doson.today';
+  const content = `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /dashboard\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+  res.header('Content-Type', 'text/plain');
+  res.send(content);
 });
 
 // Hội viên tự xóa bài đăng của mình (Member)

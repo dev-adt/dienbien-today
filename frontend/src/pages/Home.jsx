@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingAIBot from '../components/FloatingAIBot';
 import InteractiveMap from '../components/InteractiveMap';
+import SEOHead from '../components/SEOHead';
 
 export const Home = () => {
   const { role, token } = useAuth();
@@ -373,6 +374,23 @@ export const Home = () => {
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', color: '#1e293b' }}>
+      <SEOHead 
+        title="Trang chủ — Cổng thông tin Doanh nghiệp Đồ Sơn"
+        description="Nền tảng thương mại điện tử, quảng bá thương hiệu, kết nối đối tác kinh doanh và hỗ trợ hội viên doanh nghiệp tại Đồ Sơn, Hải Phòng."
+        keywords="Đồ Sơn Today, doanh nghiệp Đồ Sơn, kết nối kinh doanh, Hải Phòng, thương mại Đồ Sơn, cổng thông tin hội viên"
+        url="/"
+        schemaData={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Đồ Sơn Today",
+          "url": "https://doson.today",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://doson.today/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }}
+      />
       <Navbar />
 
       {/* Floating AI Bot widget */}
@@ -1095,7 +1113,7 @@ export const Home = () => {
                 <div 
                   key={post.id}
                   className="card-hover-effect"
-                  onClick={() => navigate(`/posts/${post.id}`)}
+                  onClick={() => navigate(`/posts/${post.slug || post.id}`)}
                   style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -1186,7 +1204,7 @@ export const Home = () => {
                       <button
                         onClick={(evt) => {
                           evt.stopPropagation();
-                          navigate(`/posts/${post.id}`);
+                          navigate(`/posts/${post.slug || post.id}`);
                         }}
                         style={{
                           backgroundColor: '#0284c7',

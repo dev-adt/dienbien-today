@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEOHead from '../components/SEOHead';
 import { CATEGORIES_DATA, ALL_CATEGORIES, getSubcategoriesByCategory, getCategoryLabel } from '../constants/categories';
 
 export const Posts = () => {
@@ -145,6 +146,13 @@ export const Posts = () => {
 
   return (
     <div className="public-body">
+      <SEOHead 
+        title={currentLang === 'en' ? 'Business Opportunities & News' : 'Bảng tin cơ hội & Quảng bá Doanh nghiệp'}
+        description="Khám phá các tin đăng tìm kiếm đối tác, nhu cầu hợp tác thương mại, sự kiện kết nối đầu tư và thông tin doanh nghiệp tại Đồ Sơn, Hải Phòng."
+        keywords="bảng tin doanh nghiệp, cơ hội kinh doanh, Đồ Sơn, Hải Phòng, hợp tác thương mại, quảng bá doanh nghiệp"
+        url="/posts"
+      />
+
       <Navbar />
 
       {/* Decorative background gradient blobs */}
@@ -210,7 +218,7 @@ export const Posts = () => {
                     <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '20px', fontWeight: 700, color: '#fff', margin: '0 0 8px', lineHeight: 1.3 }}>{p.title}</h2>
                     <p style={{ fontSize: '13px', color: '#B5CFEC', margin: '0 0 15px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.summary || p.body.replace(/<[^>]*>/g, '').substring(0, 150)}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                       <button onClick={() => navigate('/posts/' + p.id)} className="btn btn-primary" style={{ fontSize: '12px', padding: '8px 18px' }}>
+                       <button onClick={() => navigate('/posts/' + (p.slug || p.id))} className="btn btn-primary" style={{ fontSize: '12px', padding: '8px 18px' }}>
                         {t('btn_read_more')} <i className="ti ti-arrow-right"></i>
                       </button>
                       <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{p.company_name}</span>
@@ -480,7 +488,7 @@ export const Posts = () => {
 
                     {/* Action button right */}
                     <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
-                      <button onClick={() => navigate('/posts/' + p.id)} className="btn btn-primary" style={{ fontSize: '12.5px', padding: '8px 18px' }}>
+                      <button onClick={() => navigate('/posts/' + (p.slug || p.id))} className="btn btn-primary" style={{ fontSize: '12.5px', padding: '8px 18px' }}>
                         {t('btn_read_post')} <i className="ti ti-book-open"></i>
                       </button>
                     </div>
