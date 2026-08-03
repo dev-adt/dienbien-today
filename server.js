@@ -102,6 +102,78 @@ function getAPIKey(provider) {
 
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json({ limit: '2mb' }));
+
+// Helper sinh tệp sitemap.xml và robots.txt thực tế vào thư mục public/
+async function generateSitemapFiles() {
+  try {
+    const baseUrl = process.env.SITE_URL || 'https://doson.today';
+    const staticPages = ['', '/posts', '/members', '/events', '/guide', '/register'];
+
+    const [approvedPosts] = await db.query(
+      "SELECT id, slug, updated_at, created_at FROM posts WHERE status = 'approved' ORDER BY updated_at DESC"
+    );
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    for (const page of staticPages) {
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}${page}</loc>\n`;
+      xml += `    <changefreq>daily</changefreq>\n`;
+      xml += `    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    for (const p of approvedPosts) {
+      const lastMod = (p.updated_at || p.created_at || new Date()).toISOString().split('T')[0];
+      const postSlug = p.slug || p.id;
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/posts/${postSlug}</loc>\n`;
+      xml += `    <lastmod>${lastMod}</lastmod>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.7</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    const publicDir = path.join(__dirname, 'public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+
+    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml, 'utf8');
+
+    const robotsTxt = `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /dashboard\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+    fs.writeFileSync(path.join(publicDir, 'robots.txt'), robotsTxt, 'utf8');
+
+    return xml;
+  } catch (err) {
+    console.error('Lỗi sinh file sitemap.xml:', err.message);
+    return null;
+  }
+}
+
+// SEO Endpoints (đặt TRƯỚC express.static và SPA Fallback)
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const xml = await generateSitemapFiles();
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+app.get('/robots.txt', (req, res) => {
+  const baseUrl = process.env.SITE_URL || 'https://doson.today';
+  const content = `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /dashboard\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.send(content);
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Tự động tạo bảng admin_sessions nếu chưa có
@@ -195,6 +267,10 @@ db.query(`
       }
       console.log(`✅ Đã tự động tạo URL slug SEO cho ${missingSlugPosts.length} bài viết hiện có.`);
     }
+
+    // Tự động sinh tệp sitemap.xml & robots.txt thực tế vào thư mục public/
+    await generateSitemapFiles();
+    console.log('✅ Đã tự động khởi tạo tệp sitemap.xml và robots.txt chuẩn SEO trong public/.');
 
     // Thêm cột featured_requested vào bảng posts để Platinum yêu cầu ghim bài nổi bật
     const [featuredRequestedCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'featured_requested'");
