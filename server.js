@@ -663,7 +663,7 @@ async function anyAuthMiddleware(req, res, next) {
       return next();
     }
 
-    // Fallback: thử xác thực Admin
+    // Fallback 1: thử xác thực Admin
     const [adminSessions] = await db.query(
       `SELECT s.*, a.username, a.name, a.role
        FROM admin_sessions s JOIN admins a ON s.admin_id = a.id
@@ -675,6 +675,23 @@ async function anyAuthMiddleware(req, res, next) {
         id: adminSessions[0].admin_id,
         name: adminSessions[0].name,
         tier: 'Platinum' // Admin không bị giới hạn
+      };
+      return next();
+    }
+
+    // Fallback 2: thử xác thực Creator
+    const [creatorSessions] = await db.query(
+      `SELECT s.*, c.name, c.username, c.requires_approval
+       FROM creator_sessions s JOIN content_creators c ON s.creator_id = c.id
+       WHERE s.token = ? AND s.expires_at > NOW()`, [token]
+    );
+    if (creatorSessions.length) {
+      req.authUser = {
+        type: 'creator',
+        id: creatorSessions[0].creator_id,
+        name: creatorSessions[0].name,
+        username: creatorSessions[0].username,
+        tier: 'Platinum'
       };
       return next();
     }
@@ -2127,8 +2144,8 @@ app.delete('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
   }
 });
 
-// Upload tệp tin ảnh dạng Base64
-app.post('/api/upload', memberAuthMiddleware, async (req, res) => {
+// Upload tệp tin ảnh dạng Base64 (Hỗ trợ Member, Admin, Creator)
+app.post('/api/upload', anyAuthMiddleware, async (req, res) => {
   try {
     const { fileName, fileType, base64Data } = req.body;
     if (!base64Data) {

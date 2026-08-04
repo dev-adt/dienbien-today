@@ -153,27 +153,33 @@ export const CreatorDashboard = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     setUploadingImage(true);
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: formData
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setNewPostData(prev => ({ ...prev, image_url: data.url }));
-      } else {
-        alert(data.error || 'Tải ảnh lên không thành công.');
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64Data = reader.result.split(',')[1];
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            base64Data
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setNewPostData(prev => ({ ...prev, image_url: data.url }));
+        } else {
+          alert(data.error || 'Tải ảnh lên không thành công.');
+        }
+      } catch (err) {
+        alert('Lỗi kết nối khi tải ảnh lên: ' + err.message);
+      } finally {
+        setUploadingImage(false);
       }
-    } catch (err) {
-      alert('Lỗi kết nối khi tải ảnh lên: ' + err.message);
-    } finally {
-      setUploadingImage(false);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCreateOrEditPost = async (isDraft = false) => {
