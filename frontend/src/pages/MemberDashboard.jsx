@@ -240,7 +240,7 @@ export const MemberDashboard = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       alert(t('err_image_size'));
       return;
     }
@@ -259,7 +259,15 @@ export const MemberDashboard = () => {
             base64Data
           })
         });
-        const data = await res.json();
+
+        const responseText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 10MB).');
+        }
+
         if (res.ok && data.success) {
           setNewPostData(prev => ({ ...prev, image_url: data.url }));
         } else {

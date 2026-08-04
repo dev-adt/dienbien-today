@@ -148,8 +148,8 @@ export const CreatorDashboard = () => {
       alert('Vui lòng chọn một tệp hình ảnh hợp lệ (PNG, JPG, WEBP).');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Dung lượng tệp vượt quá 5MB. Vui lòng chọn tệp nhỏ hơn.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Dung lượng tệp vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.');
       return;
     }
 
@@ -167,14 +167,22 @@ export const CreatorDashboard = () => {
             base64Data
           })
         });
-        const data = await res.json();
+        
+        const responseText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 10MB).');
+        }
+
         if (res.ok && data.success) {
           setNewPostData(prev => ({ ...prev, image_url: data.url }));
         } else {
           alert(data.error || 'Tải ảnh lên không thành công.');
         }
       } catch (err) {
-        alert('Lỗi kết nối khi tải ảnh lên: ' + err.message);
+        alert('Lỗi khi tải ảnh lên: ' + err.message);
       } finally {
         setUploadingImage(false);
       }
