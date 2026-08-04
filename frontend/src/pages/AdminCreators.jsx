@@ -186,11 +186,11 @@ export const AdminCreators = () => {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                          background: c.requires_approval === 0 ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                          color: c.requires_approval === 0 ? '#10b981' : '#f59e0b',
-                          border: c.requires_approval === 0 ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(245,158,11,0.3)'
+                          background: Number(c.requires_approval) === 0 ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                          color: Number(c.requires_approval) === 0 ? '#10b981' : '#f59e0b',
+                          border: Number(c.requires_approval) === 0 ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(245,158,11,0.3)'
                         }}>
-                          {c.requires_approval === 0 ? '⚡ Duyệt tự động' : '⏳ Cần Admin duyệt'}
+                          {Number(c.requires_approval) === 0 ? '⚡ Duyệt tự động' : '⏳ Cần Admin duyệt'}
                         </span>
                       </td>
                       <td style={{ padding: '14px 20px', color: 'var(--text-muted)', fontSize: '12px' }}>
@@ -267,7 +267,7 @@ export const AdminCreators = () => {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
                   <input 
                     type="checkbox" 
-                    checked={formData.requires_approval === 0} 
+                    checked={Number(formData.requires_approval) === 0} 
                     onChange={(e) => setFormData(prev => ({ ...prev, requires_approval: e.target.checked ? 0 : 1 }))}
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />

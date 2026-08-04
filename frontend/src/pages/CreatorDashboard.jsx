@@ -6,11 +6,11 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEOHead from '../components/SEOHead';
 import RichTextEditor from '../components/RichTextEditor';
-import { CATEGORIES_DATA } from '../constants/categories';
+import { CATEGORIES_DATA, getCategoryLabel } from '../constants/categories';
 
 export const CreatorDashboard = () => {
   const { role, user, token, getAuthHeaders } = useAuth();
-  const { currentLang, t, getCategoryLabel } = useTranslation();
+  const { currentLang, t } = useTranslation();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -263,11 +263,11 @@ export const CreatorDashboard = () => {
                 borderRadius: '12px', 
                 fontWeight: 700, 
                 textTransform: 'uppercase',
-                background: user?.requires_approval === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                color: user?.requires_approval === 0 ? '#10b981' : '#f59e0b',
-                border: user?.requires_approval === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)'
+                background: Number(user?.requires_approval) === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                color: Number(user?.requires_approval) === 0 ? '#10b981' : '#f59e0b',
+                border: Number(user?.requires_approval) === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)'
               }}>
-                {user?.requires_approval === 0 ? '⚡ Duyệt bài tự động' : '⏳ Cần Admin duyệt'}
+                {Number(user?.requires_approval) === 0 ? '⚡ Duyệt bài tự động' : '⏳ Cần Admin duyệt'}
               </span>
             </div>
             <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0 }}>
@@ -533,7 +533,7 @@ export const CreatorDashboard = () => {
                   Lưu nháp
                 </button>
                 <button type="button" onClick={() => handleCreateOrEditPost(false)} className="btn btn-primary" disabled={creatingPost} style={{ padding: '8px 22px' }}>
-                  {creatingPost ? <><i className="ti ti-loader animate-spin"></i> Đang gửi...</> : (user?.requires_approval === 0 ? '🚀 Xuất bản bài viết' : '📤 Đăng tin (Chờ duyệt)')}
+                  {creatingPost ? <><i className="ti ti-loader animate-spin"></i> Đang gửi...</> : (Number(user?.requires_approval) === 0 ? '🚀 Xuất bản bài viết' : '📤 Đăng tin (Chờ duyệt)')}
                 </button>
               </div>
             </form>

@@ -621,7 +621,7 @@ async function creatorAuthMiddleware(req, res, next) {
       id: sessions[0].creator_id,
       name: sessions[0].name,
       username: sessions[0].username,
-      requires_approval: sessions[0].requires_approval,
+      requires_approval: Number(sessions[0].requires_approval),
       token: token
     };
     next();
@@ -1828,7 +1828,7 @@ app.post('/api/creator/login', async (req, res) => {
         id: creator.id,
         name: creator.name,
         username: creator.username,
-        requires_approval: creator.requires_approval
+        requires_approval: Number(creator.requires_approval)
       }
     });
   } catch (err) {
@@ -1968,7 +1968,7 @@ app.post('/api/creator/posts', creatorAuthMiddleware, async (req, res) => {
     let finalStatus = 'pending';
     if (isDraft) {
       finalStatus = 'draft';
-    } else if (req.creator.requires_approval === 0) {
+    } else if (Number(req.creator.requires_approval) === 0) {
       finalStatus = 'approved';
     }
 
@@ -2009,7 +2009,7 @@ app.put('/api/creator/posts/:id', creatorAuthMiddleware, async (req, res) => {
     let finalStatus = 'pending';
     if (isDraft) {
       finalStatus = 'draft';
-    } else if (req.creator.requires_approval === 0) {
+    } else if (Number(req.creator.requires_approval) === 0) {
       finalStatus = 'approved';
     }
 
