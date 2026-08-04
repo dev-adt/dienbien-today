@@ -163,6 +163,14 @@ export const Sidebar = () => {
       >
         <i className="ti ti-category"></i> Quản lý Chuyên mục
       </NavLink>
+
+      <NavLink 
+        to="/admin-creators" 
+        className={({ isActive }) => `sb-item ${isActive ? 'active' : ''}`}
+        style={{ textDecoration: 'none' }}
+      >
+        <i className="ti ti-user-check"></i> Biên tập viên
+      </NavLink>
       
       <NavLink 
         to="/admin-config" 

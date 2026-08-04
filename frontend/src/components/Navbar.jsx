@@ -350,7 +350,7 @@ export const Navbar = () => {
           {/* User Profile Avatar */}
           {role !== 'guest' && (
             <Link
-              to={role === 'admin' ? "/admin-dashboard" : "/member-dashboard"}
+              to={role === 'admin' ? "/admin-dashboard" : role === 'creator' ? "/creator-dashboard" : "/member-dashboard"}
               style={{
                 width: '32px',
                 height: '32px',

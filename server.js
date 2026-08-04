@@ -299,6 +299,38 @@ db.query(`
       console.log('✅ Đã thêm cột city vào bảng members');
     }
 
+    // Tự động tạo bảng content_creators và creator_sessions cho vai trò Biên tập viên
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS content_creators (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        requires_approval TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB COMMENT='Tài khoản Biên tập viên / Content Creator'
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS creator_sessions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        creator_id INT NOT NULL,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (creator_id) REFERENCES content_creators(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB COMMENT='Phiên đăng nhập Biên tập viên'
+    `);
+    console.log('✅ Bảng content_creators và creator_sessions đã sẵn sàng');
+
+    // Thêm cột creator_id vào bảng posts
+    const [creatorIdCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'creator_id'");
+    if (!creatorIdCols.length) {
+      await db.query("ALTER TABLE posts ADD COLUMN creator_id INT DEFAULT NULL AFTER member_id, ADD INDEX idx_creator (creator_id)");
+      console.log('✅ Đã thêm cột creator_id vào bảng posts');
+    }
+
     // Cập nhật ENUM cho status cột của bảng members để hỗ trợ 'suspended'
     await db.query("ALTER TABLE members MODIFY COLUMN status ENUM('pending','approved','rejected','suspended') DEFAULT 'pending'");
     console.log("✅ Cập nhật ENUM cột status bảng members thành công");
@@ -564,6 +596,40 @@ async function memberAuthMiddleware(req, res, next) {
   }
 }
 
+// Middleware xác thực Content Creator bằng token
+async function creatorAuthMiddleware(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Chưa đăng nhập hoặc thiếu token Biên tập viên.' });
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    const [sessions] = await db.query(
+      `SELECT s.*, c.name, c.username, c.requires_approval
+       FROM creator_sessions s 
+       JOIN content_creators c ON s.creator_id = c.id 
+       WHERE s.token = ? AND s.expires_at > NOW()`, 
+      [token]
+    );
+
+    if (!sessions.length) {
+      return res.status(401).json({ success: false, error: 'Phiên đăng nhập Biên tập viên không hợp lệ hoặc đã hết hạn.' });
+    }
+
+    req.creator = {
+      id: sessions[0].creator_id,
+      name: sessions[0].name,
+      username: sessions[0].username,
+      requires_approval: sessions[0].requires_approval,
+      token: token
+    };
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Lỗi xác thực Biên tập viên: ' + err.message });
+  }
+}
+
 // Middleware xác thực hỗn hợp (Admin HOẶC Member) — dùng cho AI Chat
 async function anyAuthMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -653,7 +719,34 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // 2. Thử tìm trong bảng members nếu không khớp admin
+    // 2. Thử tìm trong bảng content_creators
+    const [creatorRows] = await db.query('SELECT * FROM content_creators WHERE username = ?', [username]);
+    if (creatorRows.length > 0) {
+      const creator = creatorRows[0];
+      const match = await bcrypt.compare(password, creator.password_hash);
+      if (match) {
+        // Cấp token Creator
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
+        await db.query(
+          'INSERT INTO creator_sessions (creator_id, token, expires_at) VALUES (?, ?, ?)',
+          [creator.id, token, expiresAt]
+        );
+        return res.json({
+          success: true,
+          role: 'creator',
+          token,
+          user: {
+            id: creator.id,
+            name: creator.name,
+            username: creator.username,
+            requires_approval: creator.requires_approval
+          }
+        });
+      }
+    }
+
+    // 3. Thử tìm trong bảng members nếu không khớp
     const [memberRows] = await db.query('SELECT * FROM members WHERE username = ? OR email = ?', [username, username]);
     if (memberRows.length > 0) {
       const member = memberRows[0];
@@ -684,7 +777,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // 3. Không tìm thấy hoặc mật khẩu không chính xác
+    // 4. Không tìm thấy hoặc mật khẩu không chính xác
     return res.status(401).json({ success: false, error: 'Tài khoản hoặc mật khẩu không chính xác.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1539,11 +1632,20 @@ app.get('/api/posts', async (req, res) => {
           `SELECT s.id FROM member_sessions s JOIN members m ON s.member_id = m.id WHERE s.token = ? AND s.expires_at > NOW() AND m.status = 'approved'`, [token]
         );
         if (memberSess.length) { isAuthenticated = true; }
+        else {
+          const [creatorSess] = await db.query(
+            `SELECT s.id FROM creator_sessions s JOIN content_creators c ON s.creator_id = c.id WHERE s.token = ? AND s.expires_at > NOW()`, [token]
+          );
+          if (creatorSess.length) { isAuthenticated = true; }
+        }
       }
     }
 
-    let sql = `SELECT p.*, m.name AS company_name, m.tier AS company_tier
-               FROM posts p LEFT JOIN members m ON p.member_id = m.id WHERE 1=1`;
+    let sql = `SELECT p.*, COALESCE(c.name, m.name, 'Ban Biên tập Đồ Sơn Today') AS company_name, COALESCE(m.tier, 'Standard') AS company_tier
+               FROM posts p 
+               LEFT JOIN members m ON p.member_id = m.id 
+               LEFT JOIN content_creators c ON p.creator_id = c.id
+               WHERE 1=1`;
     const params = [];
 
     if (status)       { sql += ' AND p.status = ?';       params.push(status); }
@@ -1626,8 +1728,12 @@ app.get('/api/posts/:id', async (req, res) => {
     }
 
     const [rows] = await db.query(
-      `SELECT p.*, m.name AS company_name, m.tier AS company_tier 
-       FROM posts p LEFT JOIN members m ON p.member_id = m.id 
+      `SELECT p.*, 
+              COALESCE(c.name, m.name, 'Ban Biên tập Đồ Sơn Today') AS company_name, 
+              COALESCE(m.tier, 'Standard') AS company_tier 
+       FROM posts p 
+       LEFT JOIN members m ON p.member_id = m.id 
+       LEFT JOIN content_creators c ON p.creator_id = c.id
        WHERE p.id = ? OR p.slug = ?`,
       [identifier, identifier]
     );
@@ -1680,6 +1786,266 @@ app.put('/api/posts/:id', memberAuthMiddleware, async (req, res) => {
     );
 
     res.json({ success: true, slug, message: 'Cập nhật bài viết thành công.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════
+// CONTENT CREATOR API ENDPOINTS
+// ════════════════════════════════════════════
+
+// 1. Biên tập viên Đăng nhập
+app.post('/api/creator/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ success: false, error: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.' });
+  }
+  try {
+    const [rows] = await db.query('SELECT * FROM content_creators WHERE username = ?', [username]);
+    if (!rows.length) {
+      return res.status(401).json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
+    }
+    const creator = rows[0];
+    const match = await bcrypt.compare(password, creator.password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
+
+    await db.query(
+      'INSERT INTO creator_sessions (creator_id, token, expires_at) VALUES (?, ?, ?)',
+      [creator.id, token, expiresAt]
+    );
+
+    res.json({
+      success: true,
+      token,
+      role: 'creator',
+      creator: {
+        id: creator.id,
+        name: creator.name,
+        username: creator.username,
+        requires_approval: creator.requires_approval
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Lấy thông tin profile Biên tập viên
+app.get('/api/creator/profile', creatorAuthMiddleware, async (req, res) => {
+  res.json({
+    success: true,
+    creator: req.creator
+  });
+});
+
+// 2. Admin: Lấy danh sách Biên tập viên
+app.get('/api/admin/creators', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT c.id, c.name, c.username, c.requires_approval, c.created_at,
+             COUNT(p.id) AS post_count
+      FROM content_creators c
+      LEFT JOIN posts p ON p.creator_id = c.id
+      GROUP BY c.id
+      ORDER BY c.id DESC
+    `);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin: Thêm Biên tập viên mới
+app.post('/api/admin/creators', authMiddleware, async (req, res) => {
+  const { name, username, password, requires_approval } = req.body;
+  if (!name || !username || !password) {
+    return res.status(400).json({ success: false, error: 'Vui lòng điền đầy đủ Tên, Tên đăng nhập và Mật khẩu.' });
+  }
+  try {
+    const [existing] = await db.query('SELECT id FROM content_creators WHERE username = ?', [username]);
+    if (existing.length) {
+      return res.status(400).json({ success: false, error: 'Tên đăng nhập này đã được sử dụng.' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const approvalFlag = (requires_approval === 0 || requires_approval === false || requires_approval === '0') ? 0 : 1;
+
+    const [result] = await db.query(
+      'INSERT INTO content_creators (name, username, password_hash, requires_approval) VALUES (?, ?, ?, ?)',
+      [name, username, hash, approvalFlag]
+    );
+
+    res.json({ success: true, id: result.insertId, message: 'Thêm tài khoản Biên tập viên thành công.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin: Chỉnh sửa tài khoản Biên tập viên
+app.put('/api/admin/creators/:id', authMiddleware, async (req, res) => {
+  const { name, username, password, requires_approval } = req.body;
+  const creatorId = req.params.id;
+  if (!name || !username) {
+    return res.status(400).json({ success: false, error: 'Vui lòng điền Tên và Tên đăng nhập.' });
+  }
+  try {
+    const [existing] = await db.query('SELECT id FROM content_creators WHERE username = ? AND id != ?', [username, creatorId]);
+    if (existing.length) {
+      return res.status(400).json({ success: false, error: 'Tên đăng nhập này đã được tài khoản khác sử dụng.' });
+    }
+
+    const approvalFlag = (requires_approval === 0 || requires_approval === false || requires_approval === '0') ? 0 : 1;
+
+    if (password && password.trim() !== '') {
+      const hash = await bcrypt.hash(password, 10);
+      await db.query(
+        'UPDATE content_creators SET name = ?, username = ?, password_hash = ?, requires_approval = ? WHERE id = ?',
+        [name, username, hash, approvalFlag, creatorId]
+      );
+    } else {
+      await db.query(
+        'UPDATE content_creators SET name = ?, username = ?, requires_approval = ? WHERE id = ?',
+        [name, username, approvalFlag, creatorId]
+      );
+    }
+
+    res.json({ success: true, message: 'Cập nhật tài khoản Biên tập viên thành công.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin: Xóa Biên tập viên
+app.delete('/api/admin/creators/:id', authMiddleware, async (req, res) => {
+  try {
+    const creatorId = req.params.id;
+    await db.query('DELETE FROM content_creators WHERE id = ?', [creatorId]);
+    res.json({ success: true, message: 'Đã xóa tài khoản Biên tập viên.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Creator Posts Management API
+app.get('/api/creator/posts', creatorAuthMiddleware, async (req, res) => {
+  try {
+    const creatorId = req.creator.id;
+    const [posts] = await db.query(
+      `SELECT p.*, c.name AS author_name
+       FROM posts p 
+       LEFT JOIN content_creators c ON p.creator_id = c.id
+       WHERE p.creator_id = ?
+       ORDER BY p.id DESC`,
+      [creatorId]
+    );
+
+    const totalPosts = posts.length;
+    const approvedPosts = posts.filter(p => p.status === 'approved').length;
+    const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0);
+
+    res.json({
+      success: true,
+      data: posts,
+      stats: { totalPosts, approvedPosts, totalViews }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/creator/posts', creatorAuthMiddleware, async (req, res) => {
+  try {
+    const { title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, isDraft } = req.body;
+    if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
+    if (!category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Chuyên mục cho bài viết.' });
+    if (!sub_category) return res.status(400).json({ success: false, error: 'Vui lòng chọn Lĩnh vực cho bài viết.' });
+
+    let finalStatus = 'pending';
+    if (isDraft) {
+      finalStatus = 'draft';
+    } else if (req.creator.requires_approval === 0) {
+      finalStatus = 'approved';
+    }
+
+    const slug = await generateUniquePostSlug(title);
+
+    const [result] = await db.query(
+      `INSERT INTO posts (creator_id, title, slug, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.creator.id, title, slug, summary || '', body || '', type || 'Tin chung', category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info || req.creator.name, deadline || null, image_url || null, finalStatus, 0]
+    );
+
+    const successMsg = isDraft 
+      ? 'Đã lưu bản nháp.' 
+      : (finalStatus === 'approved' ? 'Bài viết đã xuất bản thành công!' : 'Bài viết đã gửi để admin duyệt.');
+
+    res.json({ success: true, id: result.insertId, slug, status: finalStatus, message: successMsg });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/creator/posts/:id', creatorAuthMiddleware, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const creatorId = req.creator.id;
+
+    const [existing] = await db.query('SELECT creator_id, status FROM posts WHERE id = ?', [postId]);
+    if (!existing.length) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết.' });
+    }
+    if (existing[0].creator_id !== creatorId) {
+      return res.status(403).json({ success: false, error: 'Bạn không có quyền chỉnh sửa bài viết này.' });
+    }
+
+    const { title, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, isDraft } = req.body;
+    if (!title) return res.status(400).json({ success: false, error: 'Tiêu đề bài đăng không được trống.' });
+
+    let finalStatus = 'pending';
+    if (isDraft) {
+      finalStatus = 'draft';
+    } else if (req.creator.requires_approval === 0) {
+      finalStatus = 'approved';
+    }
+
+    const slug = await generateUniquePostSlug(title, postId);
+
+    await db.query(
+      `UPDATE posts SET 
+        title = ?, slug = ?, summary = ?, body = ?, type = ?, category = ?, sub_category = ?, source_url = ?,
+        tags = ?, contact_info = ?, deadline = ?, image_url = ?, status = ?
+       WHERE id = ?`,
+      [
+        title, slug, summary || '', body || '', type || 'Tin chung', category || '', sub_category || '', source_url || null,
+        JSON.stringify(tags || []), contact_info || req.creator.name, deadline || null, image_url || null, 
+        finalStatus, postId
+      ]
+    );
+
+    res.json({ success: true, slug, status: finalStatus, message: 'Cập nhật bài viết thành công.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/creator/posts/:id', creatorAuthMiddleware, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const creatorId = req.creator.id;
+    const [existing] = await db.query('SELECT creator_id FROM posts WHERE id = ?', [postId]);
+    if (!existing.length) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết.' });
+    }
+    if (existing[0].creator_id !== creatorId) {
+      return res.status(403).json({ success: false, error: 'Bạn không có quyền xóa bài viết này.' });
+    }
+    await db.query('DELETE FROM posts WHERE id = ?', [postId]);
+    res.json({ success: true, message: 'Đã xóa bài viết thành công.' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
