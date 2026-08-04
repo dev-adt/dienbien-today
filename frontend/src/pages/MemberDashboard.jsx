@@ -49,7 +49,7 @@ export const MemberDashboard = () => {
   // Modal State for new Post
   const [modalOpen, setModalOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
-    title: '', summary: '', body: '', type: 'Tìm kiếm đối tác',
+    title: '', summary: '', body: '', type: 'Tin chung',
     category: '', sub_category: '', source_url: '', tags: '', contact_info: '', deadline: '',
     image_url: '', featured_requested: 0
   });
@@ -887,23 +887,25 @@ export const MemberDashboard = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="fg">
                     <label>{t('modal_post_type_label')}</label>
-                    <select id="type" value={newPostData.type} onChange={handleNewPostChange}>
+                    <select id="type" value={newPostData.type || 'Tin chung'} onChange={handleNewPostChange}>
+                      <option value="Tin chung">{t('type_general_news')} (Mặc định)</option>
                       <option value="Tìm kiếm đối tác">{t('type_find_partner')}</option>
                       <option value="Cần mua / Cần bán">{t('type_buy_sell')}</option>
                       <option value="Thông báo sự kiện">{t('type_event_announcement')}</option>
                       <option value="Tuyển dụng">{t('type_recruitment')}</option>
+                      <option value="Khác">{t('type_other')}</option>
                     </select>
                   </div>
 
                   <div className="fg">
-                    <label>Tags từ khoá SEO (phân tách bằng dấu phẩy)</label>
+                    <label>Từ khoá (phân tách bằng dấu phẩy)</label>
                     <input type="text" id="tags" value={newPostData.tags} onChange={handleNewPostChange} placeholder="Ví dụ: du lịch Đồ Sơn, khách sạn, đối tác thương mại" />
                   </div>
                 </div>
 
                 <div className="fg">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label style={{ margin: 0 }}>Tóm tắt bài đăng (Meta Description SEO — Tối đa 160 ký tự)</label>
+                    <label style={{ margin: 0 }}>Tóm tắt bài đăng (Meta Description — Tối đa 160 ký tự)</label>
                     <span style={{ fontSize: '11px', color: (newPostData.summary || '').length >= 160 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600 }}>
                       {(newPostData.summary || '').length}/160 ký tự
                     </span>

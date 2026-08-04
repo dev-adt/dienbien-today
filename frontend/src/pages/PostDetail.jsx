@@ -343,7 +343,7 @@ export const PostDetail = () => {
               
               <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
                 <span style={{ fontSize: '11px', background: 'rgba(2, 132, 199, 0.08)', color: 'var(--primary-dark)', border: '1px solid rgba(2, 132, 199, 0.15)', padding: '3px 10px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
-                  {post.type === 'offer' ? t('type_offer') : post.type === 'demand' ? t('type_demand') : t('type_cooperate')}
+                  {post.type === 'offer' ? t('type_offer') : post.type === 'demand' ? t('type_demand') : post.type === 'cooperate' ? t('type_cooperate') : (post.type || t('type_general_news'))}
                 </span>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{post.category || t('category_default')}</span>
               </div>
@@ -488,6 +488,35 @@ export const PostDetail = () => {
                   }
                 }
               `}</style>
+
+              {/* Hashtags / Từ khóa hiển thị đẹp mắt cuối bài viết */}
+              {post.tags && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '24px', paddingTop: '18px', borderTop: '1px dashed var(--border)' }}>
+                  <span style={{ fontSize: '12.5px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    <i className="ti ti-tags"></i> Từ khóa:
+                  </span>
+                  {(Array.isArray(post.tags) ? post.tags : (typeof post.tags === 'string' && post.tags.startsWith('[') ? (function(){ try { return JSON.parse(post.tags); } catch(e) { return post.tags.split(','); } })() : post.tags.split(','))).map((tag, idx) => {
+                    const cleanTag = typeof tag === 'string' ? tag.trim() : String(tag);
+                    if (!cleanTag) return null;
+                    return (
+                      <span 
+                        key={idx}
+                        style={{
+                          fontSize: '12px',
+                          color: '#0284c7',
+                          background: 'rgba(2, 132, 199, 0.08)',
+                          border: '1px solid rgba(2, 132, 199, 0.2)',
+                          padding: '3px 10px',
+                          borderRadius: '20px',
+                          fontWeight: 600
+                        }}
+                      >
+                        #{cleanTag.replace(/^#/, '')}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Bottom Horizontal Card: Author & Contact Details */}
