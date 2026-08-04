@@ -284,9 +284,14 @@ export const CreatorDashboard = () => {
             </p>
           </div>
 
-          <button onClick={handleOpenCreateModal} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <i className="ti ti-plus" style={{ fontSize: '18px' }}></i> Đăng bài viết mới
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <Link to="/guide?role=creator" target="_blank" className="btn btn-secondary" style={{ padding: '10px 16px', fontSize: '13.5px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <i className="ti ti-book"></i> Hướng dẫn BTV
+            </Link>
+            <button onClick={handleOpenCreateModal} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="ti ti-plus" style={{ fontSize: '18px' }}></i> Đăng bài viết mới
+            </button>
+          </div>
         </div>
 
         {loading ? (

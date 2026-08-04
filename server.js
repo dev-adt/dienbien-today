@@ -174,6 +174,7 @@ app.get('/robots.txt', (req, res) => {
   res.send(content);
 });
 
+app.use('/img_guide', express.static(path.join(__dirname, 'img_guide')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Tự động tạo bảng admin_sessions nếu chưa có

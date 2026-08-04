@@ -179,6 +179,10 @@ export const Sidebar = () => {
       >
         <i className="ti ti-settings"></i> Cài đặt AI
       </NavLink>
+
+      <Link to="/guide?role=admin" target="_blank" className="sb-item" style={{ textDecoration: 'none' }}>
+        <i className="ti ti-book"></i> Hướng dẫn Admin
+      </Link>
       
       <Link to="/" className="sb-item" style={{ textDecoration: 'none' }}>
         <i className="ti ti-external-link"></i> Xem Trang chủ
