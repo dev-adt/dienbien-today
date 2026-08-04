@@ -257,8 +257,21 @@ export const PostDetail = () => {
   const isPlatinum = post.company_tier === 'Platinum';
   const isGold = post.company_tier === 'Gold';
 
-  const plainBodyText = post.body ? post.body.replace(/<[^>]+>/g, '').substring(0, 220) : '';
-  const metaDescription = isTranslated ? (translatedSummary || plainBodyText) : (post.summary || plainBodyText || post.title);
+  const plainBodyText = post.body ? post.body.replace(/<[^>]+>/g, '').substring(0, 160) : '';
+  const rawDesc = isTranslated ? (translatedSummary || plainBodyText) : (post.summary || plainBodyText || post.title);
+  const metaDescription = rawDesc.length > 160 ? rawDesc.substring(0, 157) + '...' : rawDesc;
+
+  // Parse Tags từ khoá SEO
+  let parsedTagsStr = '';
+  if (post.tags) {
+    try {
+      const arr = typeof post.tags === 'string' && post.tags.startsWith('[') ? JSON.parse(post.tags) : post.tags;
+      parsedTagsStr = Array.isArray(arr) ? arr.join(', ') : String(arr);
+    } catch(e) {
+      parsedTagsStr = String(post.tags);
+    }
+  }
+  const metaKeywords = [parsedTagsStr, post.category, post.sub_category, 'Đồ Sơn', 'Hải Phòng', post.title].filter(Boolean).join(', ');
 
   // Generate NewsArticle JSON-LD schema
   const newsSchema = {
@@ -288,7 +301,7 @@ export const PostDetail = () => {
       <SEOHead 
         title={isTranslated ? translatedTitle : post.title}
         description={metaDescription}
-        keywords={`${post.category || ''}, ${post.sub_category || ''}, Đồ Sơn, Hải Phòng, ${post.title}`}
+        keywords={metaKeywords}
         image={imgUrl}
         url={`/posts/${post.slug || post.id}`}
         type="article"

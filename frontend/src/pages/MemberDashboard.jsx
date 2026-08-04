@@ -896,14 +896,26 @@ export const MemberDashboard = () => {
                   </div>
 
                   <div className="fg">
-                    <label>{t('modal_post_tags_label')}</label>
-                    <input type="text" id="tags" value={newPostData.tags} onChange={handleNewPostChange} placeholder={t('modal_post_tags_placeholder')} />
+                    <label>Tags từ khoá SEO (phân tách bằng dấu phẩy)</label>
+                    <input type="text" id="tags" value={newPostData.tags} onChange={handleNewPostChange} placeholder="Ví dụ: du lịch Đồ Sơn, khách sạn, đối tác thương mại" />
                   </div>
                 </div>
 
                 <div className="fg">
-                  <label>{t('modal_post_summary_label')}</label>
-                  <input type="text" id="summary" value={newPostData.summary} onChange={handleNewPostChange} placeholder={t('modal_post_summary_placeholder')} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ margin: 0 }}>Tóm tắt bài đăng (Meta Description SEO — Tối đa 160 ký tự)</label>
+                    <span style={{ fontSize: '11px', color: (newPostData.summary || '').length >= 160 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600 }}>
+                      {(newPostData.summary || '').length}/160 ký tự
+                    </span>
+                  </div>
+                  <input 
+                    type="text" 
+                    id="summary" 
+                    value={newPostData.summary} 
+                    onChange={handleNewPostChange} 
+                    maxLength={160}
+                    placeholder="Mô tả tóm tắt ngắn gọn hiển thị trên Google Search & Zalo/FB preview (tối đa 160 ký tự)..." 
+                  />
                 </div>
 
                 <div className="fg">

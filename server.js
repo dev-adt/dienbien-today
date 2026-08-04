@@ -1603,7 +1603,7 @@ app.post('/api/posts', memberAuthMiddleware, async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO posts (member_id, title, slug, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [req.member.id, title, slug, summary, body, type, category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info, deadline || null, image_url || null, finalStatus, isFeaturedRequested]
     );
     res.json({ success: true, id: result.insertId, slug, message: isDraft ? 'Đã lưu bản nháp.' : 'Bài viết đã gửi để admin duyệt.' });
