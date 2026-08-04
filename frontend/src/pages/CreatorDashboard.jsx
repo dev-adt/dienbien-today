@@ -15,6 +15,7 @@ export const CreatorDashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [creatorProfile, setCreatorProfile] = useState(user);
   const [posts, setPosts] = useState([]);
   const [stats, setStats] = useState({ totalPosts: 0, approvedPosts: 0, totalViews: 0 });
 
@@ -47,6 +48,9 @@ export const CreatorDashboard = () => {
         if (data.success) {
           setPosts(data.data || []);
           setStats(data.stats || { totalPosts: 0, approvedPosts: 0, totalViews: 0 });
+          if (data.creator) {
+            setCreatorProfile(data.creator);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -81,6 +85,9 @@ export const CreatorDashboard = () => {
         if (data.success) {
           setPosts(data.data || []);
           setStats(data.stats || { totalPosts: 0, approvedPosts: 0, totalViews: 0 });
+          if (data.creator) {
+            setCreatorProfile(data.creator);
+          }
         }
       }
     } catch (err) {
@@ -243,6 +250,8 @@ export const CreatorDashboard = () => {
     }
   };
 
+  const currentCreator = creatorProfile || user;
+
   return (
     <div className="public-body">
       <SEOHead title="Dashboard Biên tập viên | Đồ Sơn Today" description="Trang quản trị bài viết dành riêng cho Biên tập viên Đồ Sơn Today" />
@@ -255,7 +264,7 @@ export const CreatorDashboard = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
               <h1 style={{ fontFamily: 'var(--font-title)', fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-                Dashboard Biên tập viên: <span style={{ color: 'var(--neon-cyan)' }}>{user?.name || user?.username}</span>
+                Dashboard Biên tập viên: <span style={{ color: 'var(--neon-cyan)' }}>{currentCreator?.name || currentCreator?.username}</span>
               </h1>
               <span style={{ 
                 fontSize: '11px', 
@@ -263,11 +272,11 @@ export const CreatorDashboard = () => {
                 borderRadius: '12px', 
                 fontWeight: 700, 
                 textTransform: 'uppercase',
-                background: Number(user?.requires_approval) === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                color: Number(user?.requires_approval) === 0 ? '#10b981' : '#f59e0b',
-                border: Number(user?.requires_approval) === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)'
+                background: Number(currentCreator?.requires_approval) === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                color: Number(currentCreator?.requires_approval) === 0 ? '#10b981' : '#f59e0b',
+                border: Number(currentCreator?.requires_approval) === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)'
               }}>
-                {Number(user?.requires_approval) === 0 ? '⚡ Duyệt bài tự động' : '⏳ Cần Admin duyệt'}
+                {Number(currentCreator?.requires_approval) === 0 ? '⚡ Duyệt bài tự động' : '⏳ Cần Admin duyệt'}
               </span>
             </div>
             <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0 }}>
@@ -533,7 +542,7 @@ export const CreatorDashboard = () => {
                   Lưu nháp
                 </button>
                 <button type="button" onClick={() => handleCreateOrEditPost(false)} className="btn btn-primary" disabled={creatingPost} style={{ padding: '8px 22px' }}>
-                  {creatingPost ? <><i className="ti ti-loader animate-spin"></i> Đang gửi...</> : (Number(user?.requires_approval) === 0 ? '🚀 Xuất bản bài viết' : '📤 Đăng tin (Chờ duyệt)')}
+                  {creatingPost ? <><i className="ti ti-loader animate-spin"></i> Đang gửi...</> : (Number(currentCreator?.requires_approval) === 0 ? '🚀 Xuất bản bài viết' : '📤 Đăng tin (Chờ duyệt)')}
                 </button>
               </div>
             </form>

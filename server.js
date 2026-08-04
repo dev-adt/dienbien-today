@@ -324,11 +324,16 @@ db.query(`
     `);
     console.log('✅ Bảng content_creators và creator_sessions đã sẵn sàng');
 
-    // Thêm cột creator_id vào bảng posts
+    // Thêm cột creator_id vào bảng posts & đảm bảo member_id cho phép NULL
     const [creatorIdCols] = await db.query("SHOW COLUMNS FROM posts LIKE 'creator_id'");
     if (!creatorIdCols.length) {
       await db.query("ALTER TABLE posts ADD COLUMN creator_id INT DEFAULT NULL AFTER member_id, ADD INDEX idx_creator (creator_id)");
       console.log('✅ Đã thêm cột creator_id vào bảng posts');
+    }
+    try {
+      await db.query("ALTER TABLE posts MODIFY COLUMN member_id INT DEFAULT NULL");
+    } catch (e) {
+      // Ignored if already nullable
     }
 
     // Cập nhật ENUM cho status cột của bảng members để hỗ trợ 'suspended'
@@ -1950,6 +1955,7 @@ app.get('/api/creator/posts', creatorAuthMiddleware, async (req, res) => {
 
     res.json({
       success: true,
+      creator: req.creator,
       data: posts,
       stats: { totalPosts, approvedPosts, totalViews }
     });
@@ -1975,8 +1981,8 @@ app.post('/api/creator/posts', creatorAuthMiddleware, async (req, res) => {
     const slug = await generateUniquePostSlug(title);
 
     const [result] = await db.query(
-      `INSERT INTO posts (creator_id, title, slug, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO posts (creator_id, member_id, title, slug, summary, body, type, category, sub_category, source_url, tags, contact_info, deadline, image_url, status, featured_requested)
+       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [req.creator.id, title, slug, summary || '', body || '', type || 'Tin chung', category, sub_category, source_url || null, JSON.stringify(tags || []), contact_info || req.creator.name, deadline || null, image_url || null, finalStatus, 0]
     );
 
