@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
+  const savedRangeRef = useRef(null);
 
   const [isHtmlMode, setIsHtmlMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -11,15 +13,34 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [imageTab, setImageTab] = useState('upload'); // 'upload' | 'url'
   const [imageUrlInput, setImageUrlInput] = useState('');
-  const [imageWidth, setImageWidth] = useState('100%'); // '25%' | '50%' | '75%' | '100%'
-  const [imageAlign, setImageAlign] = useState('center'); // 'left' | 'center' | 'right'
+  const [imageWidth, setImageWidth] = useState('100%');
+  const [imageAlign, setImageAlign] = useState('center');
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [videoUrlInput, setVideoUrlInput] = useState('');
 
-  // Floating Image Toolbar State
+  // Selected image for inline resizing
   const [selectedImg, setSelectedImg] = useState(null);
+
+  // Save cursor selection range before focus is lost to modal inputs
+  const saveSelection = () => {
+    if (window.getSelection && window.getSelection().rangeCount > 0) {
+      savedRangeRef.current = window.getSelection().getRangeAt(0);
+    }
+  };
+
+  // Restore cursor selection range before inserting content
+  const restoreSelection = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    if (savedRangeRef.current && window.getSelection) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRangeRef.current);
+    }
+  };
 
   // Sync content from prop value when not in HTML code mode
   useEffect(() => {
@@ -61,8 +82,39 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
   const execCommand = (command, val = null) => {
     if (isHtmlMode) return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
     document.execCommand(command, false, val);
     if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  // Robust HTML Insertion method that works whether cursor selection was lost or not
+  const insertHTMLCustom = (htmlContent) => {
+    if (!htmlContent) return;
+
+    if (isHtmlMode) {
+      onChange((value || '') + '\n' + htmlContent);
+      return;
+    }
+
+    if (editorRef.current) {
+      restoreSelection();
+      
+      let inserted = false;
+      try {
+        inserted = document.execCommand('insertHTML', false, htmlContent);
+      } catch (e) {
+        inserted = false;
+      }
+
+      // Fallback: If execCommand failed or selection was invalid, append directly
+      if (!inserted || !editorRef.current.innerHTML.includes(htmlContent.substring(0, 15))) {
+        editorRef.current.innerHTML = (editorRef.current.innerHTML || '') + '<br/>' + htmlContent;
+      }
+
       onChange(editorRef.current.innerHTML);
     }
   };
@@ -74,15 +126,30 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
   };
 
   const insertLink = () => {
+    saveSelection();
     const url = prompt('Nhập địa chỉ liên kết (URL):', 'https://');
     if (url) {
+      restoreSelection();
       execCommand('createLink', url);
     }
   };
 
+  const openImageModal = () => {
+    saveSelection();
+    setImageModalOpen(true);
+  };
+
+  const openVideoModal = () => {
+    saveSelection();
+    setVideoModalOpen(true);
+  };
+
   // Insert Image Action
   const handleInsertImageFinal = (urlToInsert) => {
-    if (!urlToInsert || !urlToInsert.trim()) return;
+    if (!urlToInsert || !urlToInsert.trim()) {
+      alert('Vui lòng nhập đường dẫn hình ảnh hợp lệ.');
+      return;
+    }
 
     let marginStyle = '12px auto';
     if (imageAlign === 'left') marginStyle = '12px auto 12px 0';
@@ -90,13 +157,8 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
     const imgHtml = `<img src="${urlToInsert.trim()}" style="width: ${imageWidth}; max-width: 100%; display: block; margin: ${marginStyle}; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Ảnh bài viết" />`;
 
-    if (isHtmlMode) {
-      onChange((value || '') + '\n' + imgHtml);
-    } else {
-      execCommand('insertHTML', imgHtml);
-    }
+    insertHTMLCustom(imgHtml);
 
-    // Reset & close modal
     setImageModalOpen(false);
     setImageUrlInput('');
   };
@@ -119,13 +181,13 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
     reader.onloadend = async () => {
       try {
         const base64Data = reader.result.split(',')[1];
-        const authAuthToken = localStorage.getItem('doson_creator_token') || localStorage.getItem('doson_member_token') || localStorage.getItem('doson_admin_token');
+        const authToken = localStorage.getItem('doson_creator_token') || localStorage.getItem('doson_member_token') || localStorage.getItem('doson_admin_token');
         
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': authAuthToken ? 'Bearer ' + authAuthToken : ''
+            'Authorization': authToken ? 'Bearer ' + authToken : ''
           },
           body: JSON.stringify({
             fileName: file.name,
@@ -139,7 +201,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
         try {
           data = JSON.parse(responseText);
         } catch {
-          throw new Error('Máy chủ phản hồi lỗi. Vui lòng thử lại với tệp ảnh nhỏ hơn.');
+          throw new Error('Máy chủ phản hồi không đúng định dạng JSON.');
         }
 
         if (res.ok && data.success) {
@@ -159,7 +221,10 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
   // Video Insert Action (YouTube, Google Drive, Vimeo, MP4)
   const handleInsertVideo = () => {
-    if (!videoUrlInput || !videoUrlInput.trim()) return;
+    if (!videoUrlInput || !videoUrlInput.trim()) {
+      alert('Vui lòng dán liên kết Video.');
+      return;
+    }
 
     let input = videoUrlInput.trim();
     let videoHtml = '';
@@ -195,7 +260,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
       const vimeoId = input.split('vimeo.com/')[1].split('?')[0];
       videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 16px 0; border-radius: 12px;"><iframe src="https://player.vimeo.com/video/${vimeoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 12px;" allowfullscreen></iframe></div>`;
     } 
-    // 4. Raw HTML iframe embedded pasted directly
+    // 4. Raw HTML iframe/video pasted
     else if (input.startsWith('<iframe') || input.startsWith('<video')) {
       videoHtml = input;
     }
@@ -204,11 +269,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
       videoHtml = `<video controls style="width: 100%; max-height: 480px; border-radius: 12px; margin: 16px 0; background: #000; box-shadow: 0 4px 20px rgba(0,0,0,0.2);" src="${input}">Trình duyệt của bạn không hỗ trợ thẻ video.</video>`;
     }
 
-    if (isHtmlMode) {
-      onChange((value || '') + '\n' + videoHtml);
-    } else {
-      execCommand('insertHTML', videoHtml);
-    }
+    insertHTMLCustom(videoHtml);
 
     setVideoModalOpen(false);
     setVideoUrlInput('');
@@ -247,31 +308,23 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
     transition: 'background-color 0.2s',
   };
 
-  // Editor container styles (normal vs fullscreen)
-  const containerStyle = isFullscreen ? {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: 99999,
-    background: 'var(--surface-1)',
-    borderRadius: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
-  } : {
-    border: '1px solid var(--border-strong)',
-    borderRadius: '8px',
-    background: 'var(--surface-2)',
-    overflow: 'hidden',
-    textAlign: 'left',
-    position: 'relative'
-  };
-
-  return (
-    <div style={containerStyle}>
-      
+  // Render Editor Main Content
+  const renderEditorBody = () => (
+    <div 
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: isFullscreen ? '100vh' : 'auto',
+        border: isFullscreen ? 'none' : '1px solid var(--border-strong)',
+        borderRadius: isFullscreen ? 0 : '8px',
+        background: 'var(--surface-2)',
+        overflow: 'hidden',
+        textAlign: 'left',
+        position: isFullscreen ? 'fixed' : 'relative',
+        inset: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 999999 : 'auto'
+      }}
+    >
       {/* Formatting Toolbar */}
       <div style={{ display: 'flex', gap: '4px', padding: '8px 12px', background: 'var(--surface-0)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
         
@@ -301,7 +354,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
           {/* Insert Image Button */}
           <button 
             type="button" 
-            onClick={() => setImageModalOpen(true)} 
+            onClick={openImageModal} 
             title="Chèn hình ảnh (Từ máy hoặc Link URL)" 
             style={{ 
               ...btnStyle, 
@@ -320,7 +373,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
           {/* Insert Video Button */}
           <button 
             type="button" 
-            onClick={() => setVideoModalOpen(true)} 
+            onClick={openVideoModal} 
             title="Chèn Video (YouTube, Google Drive, Vimeo, MP4)" 
             style={{ 
               ...btnStyle, 
@@ -463,7 +516,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
       {/* Floating Toolbar when an Image is selected inside Editor */}
       {selectedImg && !isHtmlMode && (
-        <div style={{ padding: '6px 12px', background: 'var(--surface-0)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px' }}>
+        <div style={{ padding: '6px 12px', background: 'var(--surface-0)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, color: 'var(--neon-cyan)' }}>🖼️ Chỉnh kích cỡ ảnh:</span>
           <button type="button" onClick={() => resizeSelectedImage('25%')} style={btnStyle} className="btn-sm">25% (Nhỏ)</button>
           <button type="button" onClick={() => resizeSelectedImage('50%')} style={btnStyle} className="btn-sm">50% (Vừa)</button>
@@ -472,7 +525,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
           
           <span style={{ color: 'var(--border)' }}>|</span>
           
-          <button type="button" onClick={() => alignSelectedImage('left')} style={btnStyle} title="Can trái"><i className="ti ti-align-left"></i> Trái</button>
+          <button type="button" onClick={() => alignSelectedImage('left')} style={btnStyle} title="Căn trái"><i className="ti ti-align-left"></i> Trái</button>
           <button type="button" onClick={() => alignSelectedImage('center')} style={btnStyle} title="Căn giữa"><i className="ti ti-align-center"></i> Giữa</button>
           <button type="button" onClick={() => alignSelectedImage('right')} style={btnStyle} title="Căn phải"><i className="ti ti-align-right"></i> Phải</button>
         </div>
@@ -486,7 +539,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
           placeholder="Nhập hoặc dán mã HTML/<iframe>/Video tại đây..."
           style={{
             width: '100%',
-            flex: isFullscreen ? 1 : 'none',
+            flex: 1,
             minHeight: isFullscreen ? 'calc(100vh - 60px)' : '260px',
             maxHeight: isFullscreen ? 'none' : '450px',
             padding: '16px',
@@ -507,7 +560,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
           onInput={handleInput}
           onBlur={handleInput}
           style={{ 
-            flex: isFullscreen ? 1 : 'none',
+            flex: 1,
             minHeight: isFullscreen ? 'calc(100vh - 60px)' : '240px', 
             maxHeight: isFullscreen ? 'none' : '420px',
             overflowY: 'auto',
@@ -524,7 +577,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
       {/* MODAL 1: CHÈN HÌNH ẢNH (Tải từ máy hoặc Link URL + Chọn kích cỡ) */}
       {imageModalOpen && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '1.5rem', borderRadius: '16px', background: 'var(--surface-1)', border: '1px solid var(--border-strong)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -623,7 +676,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
 
       {/* MODAL 2: CHÈN VIDEO (YouTube, Google Drive, Vimeo, MP4) */}
       {videoModalOpen && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '540px', padding: '1.5rem', borderRadius: '16px', background: 'var(--surface-1)', border: '1px solid var(--border-strong)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -678,6 +731,12 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
       `}</style>
     </div>
   );
+
+  if (isFullscreen) {
+    return createPortal(renderEditorBody(), document.body);
+  }
+
+  return renderEditorBody();
 };
 
 export default RichTextEditor;

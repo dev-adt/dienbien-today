@@ -1665,8 +1665,19 @@ app.get('/api/posts', async (req, res) => {
       }
     }
 
-    // Tự động chuyển trạng thái bài viết đã hết hạn sang 'hidden' (Đã bị ẩn)
-    await db.query("UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline < NOW() AND status = 'approved'");
+    // Tự động chuyển trạng thái bài viết đã hết hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
+    try {
+      await db.query(`
+        UPDATE posts 
+        SET status = 'hidden' 
+        WHERE deadline IS NOT NULL 
+          AND deadline != '' 
+          AND status = 'approved'
+          AND DATE(deadline) < CURDATE()
+      `);
+    } catch (e) {
+      console.warn('Cảnh báo tự động ẩn bài viết quá hạn:', e.message);
+    }
 
     let sql = `SELECT p.*, COALESCE(c.name, m.name, 'Ban Biên tập Đồ Sơn Today') AS company_name, COALESCE(m.tier, 'Standard') AS company_tier
                FROM posts p 
@@ -1676,8 +1687,8 @@ app.get('/api/posts', async (req, res) => {
     const params = [];
 
     // Nếu lọc theo status 'approved' (hoặc khách vãng lai), chỉ lấy bài viết chưa quá hạn
-    if (status === 'approved' || (!status && !member_id)) {
-      sql += ' AND (p.deadline IS NULL OR p.deadline >= NOW())';
+    if (status === 'approved' || (!status && !member_id && !isAuthenticated)) {
+      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR DATE(p.deadline) >= CURDATE())";
     }
 
     if (status)       { sql += ' AND p.status = ?';       params.push(status); }

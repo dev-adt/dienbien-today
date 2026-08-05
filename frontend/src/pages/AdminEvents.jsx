@@ -9,6 +9,13 @@ export const AdminEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // all, upcoming, ongoing, completed, cancelled
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState(null);
   
@@ -25,6 +32,7 @@ export const AdminEvents = () => {
 
   const loadEvents = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/events', {
         headers: getAuthHeaders()
@@ -43,6 +51,11 @@ export const AdminEvents = () => {
   useEffect(() => {
     loadEvents();
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery, pageSize]);
 
   const handleOpenAddModal = () => {
     setFormData({
@@ -101,14 +114,13 @@ export const AdminEvents = () => {
         },
         body: JSON.stringify(payload)
       });
-
-      const data = await res.json();
       if (res.ok) {
-        alert(editingEventId ? 'Cập nhật sự kiện thành công!' : 'Thêm sự kiện mới thành công!');
+        alert(editingEventId ? 'Cập nhật sự kiện thành công!' : 'Tạo sự kiện mới thành công!');
         setModalOpen(false);
         loadEvents();
       } else {
-        alert(data.error || 'Có lỗi xảy ra.');
+        const err = await res.json();
+        alert(err.error || 'Thao tác thất bại.');
       }
     } catch (err) {
       alert('Lỗi: ' + err.message);
@@ -116,7 +128,7 @@ export const AdminEvents = () => {
   };
 
   const handleDelete = async (id, title) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa sự kiện: "${title}"?`)) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa sự kiện "${title}"?`)) return;
 
     try {
       const res = await fetch(`/api/admin/events/${id}`, {
@@ -150,14 +162,57 @@ export const AdminEvents = () => {
     }
   };
 
+  // Filter logic
+  const filteredEvents = events.filter(e => {
+    // 1. Status Filter
+    if (statusFilter !== 'all' && e.status !== statusFilter) return false;
+
+    // 2. Search Query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = e.title && e.title.toLowerCase().includes(q);
+      const matchLocation = e.location && e.location.toLowerCase().includes(q);
+      const matchOrganizer = e.organizer && e.organizer.toLowerCase().includes(q);
+      if (!matchTitle && !matchLocation && !matchOrganizer) return false;
+    }
+
+    return true;
+  });
+
+  // Pagination calculation
+  const totalItems = filteredEvents.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + pageSize);
+
   return (
-    <AdminLayout title="Quản Lý Sự Kiện">
+    <AdminLayout title="Quản Lý Sự Kiện Giao Thương">
       <div className="card" style={{ textAlign: 'left' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-          <h2 style={{ fontSize: '15px', color: '#0F172A', fontWeight: 700, margin: 0 }}>Danh sách Sự kiện giao thương</h2>
-          <button className="btn btn-primary" onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-            <i className="ti ti-plus"></i> Thêm Sự kiện mới
-          </button>
+        
+        {/* Top bar bộ lọc & Nút Thêm mới */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+          
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            <button className={`btn ${statusFilter === 'all' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('all')} style={{ fontSize: '12px', padding: '6px 12px' }}>Tất cả ({events.length})</button>
+            <button className={`btn ${statusFilter === 'upcoming' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('upcoming')} style={{ fontSize: '12px', padding: '6px 12px' }}>Sắp diễn ra ({events.filter(e => e.status === 'upcoming').length})</button>
+            <button className={`btn ${statusFilter === 'ongoing' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('ongoing')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đang diễn ra ({events.filter(e => e.status === 'ongoing').length})</button>
+            <button className={`btn ${statusFilter === 'completed' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('completed')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đã kết thúc ({events.filter(e => e.status === 'completed').length})</button>
+            <button className={`btn ${statusFilter === 'cancelled' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('cancelled')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đã hủy ({events.filter(e => e.status === 'cancelled').length})</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input 
+              type="text" 
+              placeholder="Tìm tên sự kiện, địa điểm..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '12px', width: '200px', outline: 'none' }}
+            />
+            <button className="btn btn-primary" onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+              <i className="ti ti-plus"></i> Thêm Sự kiện mới
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -168,49 +223,94 @@ export const AdminEvents = () => {
           <div style={{ padding: '3rem', textAlign: 'center', color: '#EF4444' }}>
             <i className="ti ti-alert-triangle" style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}></i> Lỗi tải dữ liệu: {error}
           </div>
-        ) : events.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-light-muted)' }}>
-            <i className="ti ti-calendar" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Chưa có sự kiện nào được tạo.
+            <i className="ti ti-calendar" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Chưa có sự kiện nào phù hợp bộ lọc.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left', background: '#F8FAFC' }}>
-                  <th style={{ padding: '12px 16px' }}>Tên Sự Kiện</th>
-                  <th style={{ padding: '12px 16px' }}>Ngày Tổ Chức</th>
-                  <th style={{ padding: '12px 16px' }}>Địa Điểm</th>
-                  <th style={{ padding: '12px 16px' }}>Đơn Vị Tổ Chức</th>
-                  <th style={{ padding: '12px 16px' }}>Sức Chứa / Quan Tâm</th>
-                  <th style={{ padding: '12px 16px' }}>Trạng Thế</th>
-                  <th style={{ padding: '12px 16px', textAction: 'right' }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((e) => (
-                  <tr key={e.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0F172A', maxWidth: '250px' }}>{e.title}</td>
-                    <td style={{ padding: '12px 16px', color: '#334155' }}>{new Date(e.event_date).toLocaleDateString('vi-VN')}</td>
-                    <td style={{ padding: '12px 16px', color: '#334155' }}>{e.location || 'Chưa thiết lập'}</td>
-                    <td style={{ padding: '12px 16px', color: '#334155' }}>{e.organizer || 'Chưa thiết lập'}</td>
-                    <td style={{ padding: '12px 16px', color: '#334155' }}>
-                      <div>Sức chứa: {e.capacity ? `${e.capacity} khách` : 'Không giới hạn'}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--amber)', marginTop: '2px' }}>
-                        <i className="ti ti-star-filled"></i> {e.interest_count || 0} lượt quan tâm
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>{getStatusBadge(e.status)}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="quick-btn" onClick={() => handleOpenEditModal(e)} style={{ padding: '4px 8px', fontSize: '11px', background: '#3B82F6', color: '#fff', border: '1px solid #3B82F6', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
-                        <button className="quick-btn" onClick={() => handleDelete(e.id, e.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#EF4444', color: '#fff', border: '1px solid #EF4444', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
-                      </div>
-                    </td>
+          <>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left', background: '#F8FAFC' }}>
+                    <th style={{ padding: '12px 16px' }}>Tên Sự Kiện</th>
+                    <th style={{ padding: '12px 16px' }}>Ngày Tổ Chức</th>
+                    <th style={{ padding: '12px 16px' }}>Địa Điểm</th>
+                    <th style={{ padding: '12px 16px' }}>Đơn Vị Tổ Chức</th>
+                    <th style={{ padding: '12px 16px' }}>Sức Chứa / Quan Tâm</th>
+                    <th style={{ padding: '12px 16px' }}>Trạng Thái</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedEvents.map((e) => (
+                    <tr key={e.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0F172A', maxWidth: '250px' }}>{e.title}</td>
+                      <td style={{ padding: '12px 16px', color: '#334155' }}>{new Date(e.event_date).toLocaleDateString('vi-VN')}</td>
+                      <td style={{ padding: '12px 16px', color: '#334155' }}>{e.location || 'Chưa thiết lập'}</td>
+                      <td style={{ padding: '12px 16px', color: '#334155' }}>{e.organizer || 'Chưa thiết lập'}</td>
+                      <td style={{ padding: '12px 16px', color: '#334155' }}>
+                        <div>Sức chứa: {e.capacity ? `${e.capacity} khách` : 'Không giới hạn'}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--amber)', marginTop: '2px' }}>
+                          <i className="ti ti-star-filled"></i> {e.interest_count || 0} lượt quan tâm
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>{getStatusBadge(e.status)}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button className="quick-btn" onClick={() => handleOpenEditModal(e)} style={{ padding: '4px 8px', fontSize: '11px', background: '#3B82F6', color: '#fff', border: '1px solid #3B82F6', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
+                          <button className="quick-btn" onClick={() => handleDelete(e.id, e.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#EF4444', color: '#fff', border: '1px solid #EF4444', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Thanh Phân Trang */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ fontSize: '12.5px', color: '#64748B' }}>
+                Hiển thị <strong>{startIndex + 1}</strong> - <strong>{Math.min(startIndex + pageSize, totalItems)}</strong> trên tổng số <strong>{totalItems}</strong> sự kiện
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#64748B' }}>Số mục / trang:</span>
+                <select 
+                  value={pageSize} 
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '12px', outline: 'none', background: '#fff' }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+
+                <div style={{ display: 'flex', gap: '4px', marginLeft: '10px' }}>
+                  <button 
+                    disabled={validCurrentPage === 1} 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: validCurrentPage === 1 ? '#F1F5F9' : '#fff', cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    ‹ Trước
+                  </button>
+                  
+                  <span style={{ padding: '4px 10px', fontSize: '12px', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center' }}>
+                    {validCurrentPage} / {totalPages}
+                  </span>
+
+                  <button 
+                    disabled={validCurrentPage >= totalPages} 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: validCurrentPage >= totalPages ? '#F1F5F9' : '#fff', cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    Sau ›
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

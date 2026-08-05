@@ -8,9 +8,14 @@ export const AdminPosts = () => {
   // States
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all'); // all, pending, approved, rejected
+  const [statusFilter, setStatusFilter] = useState('all'); // all, pending, approved, rejected, hidden
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // States for viewing full post
   const [viewPostModalOpen, setViewPostModalOpen] = useState(false);
@@ -18,9 +23,9 @@ export const AdminPosts = () => {
 
   const loadPosts = async () => {
     setLoading(true);
+    setError('');
     try {
-      const statusParam = statusFilter !== 'all' ? `status=${statusFilter}` : '';
-      const res = await fetch(`/api/posts?${statusParam}`, {
+      const res = await fetch(`/api/posts`, {
         headers: getAuthHeaders()
       });
       if (!res.ok) throw new Error('Không thể tải danh sách bài viết');
@@ -36,11 +41,15 @@ export const AdminPosts = () => {
 
   useEffect(() => {
     loadPosts();
-  }, [statusFilter]);
+  }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, categoryFilter, searchQuery, pageSize]);
 
   const handleApprove = async (id, title) => {
-    if (!confirm(`Duyệt đăng tin bài: "${title}"?`)) return;
-
+    if (!confirm(`Duyệt xuất bản bài viết: "${title}"?`)) return;
     try {
       const res = await fetch(`/api/posts/${id}/approve`, {
         method: 'PATCH',
@@ -61,7 +70,6 @@ export const AdminPosts = () => {
   const handleReject = async (id, title) => {
     const reason = prompt(`Nhập lý do từ chối bài viết "${title}":`);
     if (reason === null) return;
-
     try {
       const res = await fetch(`/api/posts/${id}/reject`, {
         method: 'PATCH',
@@ -100,12 +108,12 @@ export const AdminPosts = () => {
   };
 
   const handleHide = async (id, title) => {
-    if (!confirm(`Tạm ẩn bài viết: "${title}"? Bài viết sẽ không hiển thị trên website nữa.`)) return;
+    if (!confirm(`Ẩn bài viết: "${title}"? Bài viết sẽ không hiển thị công khai nữa.`)) return;
     try {
       const res = await fetch(`/api/posts/${id}/reject`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ reason: 'Admin tạm ẩn bài viết' })
+        body: JSON.stringify({ reason: 'Admin ẩn bài viết' })
       });
       if (res.ok) {
         alert('Đã ẩn bài viết thành công!');
@@ -138,40 +146,81 @@ export const AdminPosts = () => {
     }
   };
 
-  // Tìm kiếm cục bộ
+  // Get unique categories list from posts for filter
+  const categoriesOptions = Array.from(new Set(posts.map(p => p.category).filter(Boolean)));
+
+  // Filter posts
   const filteredPosts = posts.filter(p => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return p.title.toLowerCase().includes(q) || 
-           (p.company_name && p.company_name.toLowerCase().includes(q));
+    // 1. Status Filter
+    if (statusFilter === 'pending' && p.status !== 'pending') return false;
+    if (statusFilter === 'approved' && (p.status !== 'approved' || (p.deadline && new Date(p.deadline) < new Date()))) return false;
+    if (statusFilter === 'rejected' && p.status !== 'rejected') return false;
+    if (statusFilter === 'hidden' && (p.status === 'hidden' || p.status === 'rejected' || (p.deadline && new Date(p.deadline) < new Date())) === false) return false;
+
+    // 2. Category Filter
+    if (categoryFilter !== 'all' && p.category !== categoryFilter) return false;
+
+    // 3. Search Query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = p.title && p.title.toLowerCase().includes(q);
+      const matchAuthor = p.company_name && p.company_name.toLowerCase().includes(q);
+      if (!matchTitle && !matchAuthor) return false;
+    }
+
+    return true;
   });
 
+  // Pagination calculation
+  const totalItems = filteredPosts.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedPosts = filteredPosts.slice(startIndex, startIndex + pageSize);
+
   return (
-    <AdminLayout title="Duyệt Tin Giao Thương">
+    <AdminLayout title="Duyệt Tin Giao Thương & Tin Tức">
       <div className="card" style={{ textAlign: 'left' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+        
+        {/* Thanh Bộ Lọc & Tìm Kiếm Top */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
           
-          {/* Tabs bộ lọc */}
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button className={`btn ${statusFilter === 'all' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('all')} style={{ fontSize: '12px', padding: '6px 12px' }}>Tất cả</button>
-            <button className={`btn ${statusFilter === 'pending' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('pending')} style={{ fontSize: '12px', padding: '6px 12px' }}>Chờ duyệt</button>
-            <button className={`btn ${statusFilter === 'approved' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('approved')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đã duyệt</button>
-            <button className={`btn ${statusFilter === 'rejected' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('rejected')} style={{ fontSize: '12px', padding: '6px 12px' }}>Từ chối</button>
+          {/* Tabs Trạng thái */}
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            <button className={`btn ${statusFilter === 'all' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('all')} style={{ fontSize: '12px', padding: '6px 12px' }}>Tất cả ({posts.length})</button>
+            <button className={`btn ${statusFilter === 'pending' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('pending')} style={{ fontSize: '12px', padding: '6px 12px' }}>Chờ duyệt ({posts.filter(p => p.status === 'pending').length})</button>
+            <button className={`btn ${statusFilter === 'approved' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('approved')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đã duyệt ({posts.filter(p => p.status === 'approved' && (!p.deadline || new Date(p.deadline) >= new Date())).length})</button>
+            <button className={`btn ${statusFilter === 'rejected' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('rejected')} style={{ fontSize: '12px', padding: '6px 12px' }}>Từ chối ({posts.filter(p => p.status === 'rejected').length})</button>
+            <button className={`btn ${statusFilter === 'hidden' ? 'btn-primary' : ''}`} onClick={() => setStatusFilter('hidden')} style={{ fontSize: '12px', padding: '6px 12px' }}>Đã ẩn / Hết hạn ({posts.filter(p => p.status === 'hidden' || (p.deadline && new Date(p.deadline) < new Date())).length})</button>
           </div>
 
-          {/* Tìm kiếm */}
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm tin đăng..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '12px', width: '240px', outline: 'none' }}
-          />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Bộ lọc Chuyên mục */}
+            <select 
+              value={categoryFilter} 
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '12px', outline: 'none', background: '#fff' }}
+            >
+              <option value="all">-- Tất cả chuyên mục --</option>
+              {categoriesOptions.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            {/* Tim kiem */}
+            <input 
+              type="text" 
+              placeholder="Tìm theo tiêu đề, tác giả..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '12px', width: '220px', outline: 'none' }}
+            />
+          </div>
         </div>
 
         {loading ? (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-light-muted)' }}>
-            <i className="ti ti-loader animate-spin" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Đang tải bài viết...
+            <i className="ti ti-loader animate-spin" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Đang tải danh sách bài viết...
           </div>
         ) : error ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: '#EF4444' }}>
@@ -179,98 +228,151 @@ export const AdminPosts = () => {
           </div>
         ) : filteredPosts.length === 0 ? (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-light-muted)' }}>
-            <i className="ti ti-news" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Không tìm thấy bài đăng nào phù hợp.
+            <i className="ti ti-news" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px' }}></i> Không tìm thấy bài đăng nào phù hợp với bộ lọc.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left', background: '#F8FAFC' }}>
-                  <th style={{ padding: '12px 16px' }}>Doanh nghiệp</th>
-                  <th style={{ padding: '12px 16px', width: '30%' }}>Tiêu đề tin đăng</th>
-                  <th style={{ padding: '12px 16px' }}>Phân loại</th>
-                  <th style={{ padding: '12px 16px' }}>Nổi bật</th>
-                  <th style={{ padding: '12px 16px' }}>Lượt xem</th>
-                  <th style={{ padding: '12px 16px' }}>Ngày đăng</th>
-                  <th style={{ padding: '12px 16px' }}>Trạng thái</th>
-                  <th style={{ padding: '12px 16px' }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPosts.map((p) => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{p.company_name || 'Hội viên ẩn danh'}</div>
-                      <span className={`badge ${p.company_tier === 'Platinum' ? 'b-platinum' : p.company_tier === 'Gold' ? 'b-gold' : 'b-silver'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
-                        {p.company_tier}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <div style={{ fontWeight: 600, color: '#1E293B', textAlign: 'left' }}>{p.title}</div>
-                        {p.featured_requested === 1 && p.is_featured === 0 && (
-                          <span style={{ fontSize: '9px', background: 'rgba(245, 158, 11, 0.15)', color: '#D97706', border: '1px solid rgba(245,158,11,0.3)', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
-                            Yêu cầu ghim <i className="ti ti-star-filled"></i>
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px', textAlign: 'left' }}>
-                        {p.summary}
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#475569' }}>{p.type || 'Nhu cầu'}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {p.status === 'approved' ? (
-                        <button 
-                          onClick={() => handleToggleFeatured(p.id, p.is_featured === 1)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: p.is_featured === 1 ? '#F59E0B' : '#CBD5E1',
-                            fontSize: '18px',
-                            padding: 0
-                          }}
-                          title={p.is_featured === 1 ? "Bỏ ghim bài nổi bật" : "Ghim nổi bật (Tối đa 3 bài)"}
-                        >
-                          <i className={`ti ${p.is_featured === 1 ? 'ti-star-filled' : 'ti-star'}`}></i>
-                        </button>
-                      ) : (
-                        <span style={{ color: '#94A3B8', fontSize: '11px' }}>Chờ duyệt</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#475569' }}><i className="ti ti-eye"></i> {p.views || 0}</td>
-                    <td style={{ padding: '12px 16px', color: '#64748B' }}>
-                      {new Date(p.created_at).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span className={`badge ${p.status === 'approved' ? 'approved' : p.status === 'rejected' ? 'rejected' : 'pending'}`}>
-                        {p.status === 'approved' ? 'Đã duyệt' : p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt'}
-                      </span>
-                      {p.status === 'rejected' && p.reject_reason && (
-                        <div style={{ fontSize: '10px', color: '#EF4444', marginTop: '4px', maxWidth: '150px', whiteSpace: 'normal' }}>Lý do: {p.reject_reason}</div>
-                      )}
-                    </td>
-                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="quick-btn" onClick={() => { setSelectedPostToView(p); setViewPostModalOpen(true); }} style={{ padding: '4px 8px', fontSize: '11px', background: '#3B82F6', color: '#fff', border: '1px solid #3B82F6', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
-                        {p.status !== 'approved' && (
-                          <button className="quick-btn quick-btn-approve" onClick={() => handleApprove(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px' }}>Duyệt</button>
-                        )}
-                        {p.status === 'approved' && (
-                          <button className="quick-btn" onClick={() => handleHide(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#F59E0B', color: '#fff', border: '1px solid #F59E0B', borderRadius: '4px', cursor: 'pointer' }}>Ẩn bài</button>
-                        )}
-                        {p.status !== 'approved' && p.status !== 'rejected' && (
-                          <button className="quick-btn quick-btn-reject" onClick={() => handleReject(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px' }}>Từ chối</button>
-                        )}
-                        <button className="quick-btn" onClick={() => handleDelete(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#EF4444', color: '#fff', border: '1px solid #EF4444', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
-                      </div>
-                    </td>
+          <>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left', background: '#F8FAFC' }}>
+                    <th style={{ padding: '12px 16px' }}>Tác giả / Doanh nghiệp</th>
+                    <th style={{ padding: '12px 16px', width: '32%' }}>Tiêu đề tin đăng</th>
+                    <th style={{ padding: '12px 16px' }}>Chuyên mục</th>
+                    <th style={{ padding: '12px 16px' }}>Nổi bật</th>
+                    <th style={{ padding: '12px 16px' }}>Lượt xem</th>
+                    <th style={{ padding: '12px 16px' }}>Ngày đăng</th>
+                    <th style={{ padding: '12px 16px' }}>Trạng thái</th>
+                    <th style={{ padding: '12px 16px' }}>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-           </div>
+                </thead>
+                <tbody>
+                  {paginatedPosts.map((p) => {
+                    const isExpired = p.deadline && new Date(p.deadline) < new Date();
+                    const isHiddenOrExpired = p.status === 'hidden' || isExpired;
+
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ fontWeight: 600, color: '#0F172A' }}>{p.company_name || 'Tác giả ẩn danh'}</div>
+                          <span className={`badge ${p.company_tier === 'Platinum' ? 'b-platinum' : p.company_tier === 'Gold' ? 'b-gold' : 'b-silver'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
+                            {p.company_tier}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <div style={{ fontWeight: 600, color: '#1E293B', textAlign: 'left' }}>{p.title}</div>
+                            {p.featured_requested === 1 && p.is_featured === 0 && (
+                              <span style={{ fontSize: '9px', background: 'rgba(245, 158, 11, 0.15)', color: '#D97706', border: '1px solid rgba(245,158,11,0.3)', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                                Yêu cầu ghim <i className="ti ti-star-filled"></i>
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px', textAlign: 'left' }}>
+                            {p.summary}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#475569' }}>
+                          <div>{p.category || 'Chưa phân loại'}</div>
+                          <div style={{ fontSize: '10.5px', color: '#94A3B8' }}>{p.sub_category}</div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {p.status === 'approved' && !isExpired ? (
+                            <button 
+                              onClick={() => handleToggleFeatured(p.id, p.is_featured === 1)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: p.is_featured === 1 ? '#F59E0B' : '#CBD5E1',
+                                fontSize: '18px',
+                                padding: 0
+                              }}
+                              title={p.is_featured === 1 ? "Bỏ ghim bài nổi bật" : "Ghim nổi bật (Tối đa 3 bài)"}
+                            >
+                              <i className={`ti ${p.is_featured === 1 ? 'ti-star-filled' : 'ti-star'}`}></i>
+                            </button>
+                          ) : (
+                            <span style={{ color: '#94A3B8', fontSize: '11px' }}>-</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#475569' }}><i className="ti ti-eye"></i> {p.views || 0}</td>
+                        <td style={{ padding: '12px 16px', color: '#64748B' }}>
+                          {new Date(p.created_at).toLocaleDateString('vi-VN')}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span className={`badge ${isHiddenOrExpired ? 'rejected' : p.status === 'approved' ? 'approved' : p.status === 'rejected' ? 'rejected' : 'pending'}`}>
+                            {isHiddenOrExpired ? '❌ Đã bị ẩn (Hết hạn)' : p.status === 'approved' ? 'Đã duyệt' : p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt'}
+                          </span>
+                          {p.status === 'rejected' && p.reject_reason && (
+                            <div style={{ fontSize: '10px', color: '#EF4444', marginTop: '4px', maxWidth: '150px', whiteSpace: 'normal' }}>Lý do: {p.reject_reason}</div>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            <button className="quick-btn" onClick={() => { setSelectedPostToView(p); setViewPostModalOpen(true); }} style={{ padding: '4px 8px', fontSize: '11px', background: '#3B82F6', color: '#fff', border: '1px solid #3B82F6', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
+                            {p.status !== 'approved' && !isExpired && (
+                              <button className="quick-btn quick-btn-approve" onClick={() => handleApprove(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px' }}>Duyệt</button>
+                            )}
+                            {p.status === 'approved' && !isExpired && (
+                              <button className="quick-btn" onClick={() => handleHide(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#F59E0B', color: '#fff', border: '1px solid #F59E0B', borderRadius: '4px', cursor: 'pointer' }}>Ẩn bài</button>
+                            )}
+                            {p.status === 'pending' && (
+                              <button className="quick-btn quick-btn-reject" onClick={() => handleReject(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px' }}>Từ chối</button>
+                            )}
+                            <button className="quick-btn" onClick={() => handleDelete(p.id, p.title)} style={{ padding: '4px 8px', fontSize: '11px', background: '#EF4444', color: '#fff', border: '1px solid #EF4444', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Thanh Phân Trang (Pagination Controls) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ fontSize: '12.5px', color: '#64748B' }}>
+                Hiển thị <strong>{startIndex + 1}</strong> - <strong>{Math.min(startIndex + pageSize, totalItems)}</strong> trên tổng số <strong>{totalItems}</strong> bài viết
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#64748B' }}>Số mục / trang:</span>
+                <select 
+                  value={pageSize} 
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '12px', outline: 'none', background: '#fff' }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+
+                <div style={{ display: 'flex', gap: '4px', marginLeft: '10px' }}>
+                  <button 
+                    disabled={validCurrentPage === 1} 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: validCurrentPage === 1 ? '#F1F5F9' : '#fff', cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    ‹ Trước
+                  </button>
+                  
+                  <span style={{ padding: '4px 10px', fontSize: '12px', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center' }}>
+                    {validCurrentPage} / {totalPages}
+                  </span>
+
+                  <button 
+                    disabled={validCurrentPage >= totalPages} 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: validCurrentPage >= totalPages ? '#F1F5F9' : '#fff', cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer', fontSize: '12px' }}
+                  >
+                    Sau ›
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -285,7 +387,7 @@ export const AdminPosts = () => {
                 </span>
                 <h3 style={{ margin: 0, fontSize: '18px', color: '#0F172A', fontWeight: 700 }}>{selectedPostToView.title}</h3>
                 <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-                  Đăng bởi: <strong>{selectedPostToView.company_name}</strong> | Loại tin: <strong>{selectedPostToView.type}</strong> | Chuyên mục: <strong>{selectedPostToView.category || 'Chưa xếp'}</strong> | Lĩnh vực: <strong>{selectedPostToView.sub_category || 'Chưa xếp'}</strong>
+                  Đăng bởi: <strong>{selectedPostToView.company_name}</strong> | Chuyên mục: <strong>{selectedPostToView.category || 'Chưa xếp'}</strong> | Lĩnh vực: <strong>{selectedPostToView.sub_category || 'Chưa xếp'}</strong>
                 </div>
               </div>
               <button 
@@ -322,7 +424,7 @@ export const AdminPosts = () => {
                 <div>
                   <div style={{ fontSize: '11px', color: '#64748B' }}>Hạn đăng tin</div>
                   <div style={{ fontWeight: '600', color: '#0F172A', marginTop: '2px' }}>
-                    {selectedPostToView.deadline ? new Date(selectedPostToView.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+                    {selectedPostToView.deadline ? new Date(selectedPostToView.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn (Hiển thị vĩnh viễn)'}
                   </div>
                 </div>
               </div>
