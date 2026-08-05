@@ -17,6 +17,8 @@ export const Home = () => {
   const [stats, setStats] = useState({ members: 0, posts: 0, events: 0 });
   const [latestPosts, setLatestPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [choHaiSanPosts, setChoHaiSanPosts] = useState([]);
+  const [loadingChoHaiSan, setLoadingChoHaiSan] = useState(true);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -159,6 +161,34 @@ export const Home = () => {
     fetchLatestPosts();
   }, [token]);
 
+  // Fetch Posts cho Chuyên mục "Chợ hải sản"
+  useEffect(() => {
+    const fetchChoHaiSanPosts = async () => {
+      setLoadingChoHaiSan(true);
+      try {
+        const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+        const res = await fetch(`/api/posts?category=${encodeURIComponent('Chợ hải sản')}&status=approved`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          let posts = data.data || [];
+          if (!posts.length) {
+            const res2 = await fetch(`/api/posts?category=${encodeURIComponent('Chợ Hải Sản')}&status=approved`, { headers });
+            if (res2.ok) {
+              const data2 = await res2.json();
+              posts = data2.data || [];
+            }
+          }
+          setChoHaiSanPosts(posts.slice(0, 6));
+        }
+      } catch (err) {
+        console.error('Error fetching Chợ hải sản posts:', err);
+      } finally {
+        setLoadingChoHaiSan(false);
+      }
+    };
+    fetchChoHaiSanPosts();
+  }, [token]);
+
   // Fetch Upcoming Events
   useEffect(() => {
     const fetchEvents = async () => {
@@ -245,6 +275,40 @@ export const Home = () => {
       tier: 'Silver',
       desc: 'Nước mắm Cát Vân vang danh và chả cá Thu Đồ Sơn nguyên chất không chất bảo quản.',
       phone: '0977.222.333'
+    }
+  ];
+
+  // Default fallback posts cho chuyên mục Chợ Hải Sản
+  const demoSeafoodList = [
+    {
+      id: 'sf-1',
+      title: 'Cua Biển Đồ Sơn Tươi Sống (Cua Gạch & Cua Thịt Đặc Sản)',
+      summary: 'Cua biển Đồ Sơn thịt chắc, ngọt thơm. Đánh bắt tươi sống trong ngày tại vùng biển Đồ Sơn - Hải Phòng.',
+      image_url: 'https://images.unsplash.com/photo-1559742811-822863c46f43?auto=format&fit=crop&w=600&q=80',
+      company_name: 'Hải Sản Tươi Ngon Đồ Sơn',
+      category: 'Chợ hải sản',
+      sub_category: 'Cua, Ghẹ biển',
+      created_at: 'Hôm nay'
+    },
+    {
+      id: 'sf-2',
+      title: 'Bề Bề Chao (Tôm Tít) Tươi Sống Nguồn Hàng Giá Sỉ Đồ Sơn',
+      summary: 'Chuyên cung cấp Bề bề tươi sống nguyên con, thịt dai ngọt chắc nịch cho nhà hàng, khách sạn và khách du lịch.',
+      image_url: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?auto=format&fit=crop&w=600&q=80',
+      company_name: 'Ngư Dân Đồ Sơn',
+      category: 'Chợ hải sản',
+      sub_category: 'Tôm, Bề Bề',
+      created_at: 'Hôm nay'
+    },
+    {
+      id: 'sf-3',
+      title: 'Mực Lá & Mực Ống Đồ Sơn Cấp Đông Tại Tàu Ngay Khi Đánh Bắt',
+      summary: 'Mực biển Đồ Sơn câu tự nhiên, giòn ngọt đậm đà vị biển. Đảm bảo 100% không chất bảo quản.',
+      image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80',
+      company_name: 'Hợp Tác Xã Đánh Bắt Hải Sản',
+      category: 'Chợ hải sản',
+      sub_category: 'Mực biển tươi',
+      created_at: 'Hôm nay'
     }
   ];
 
@@ -1231,6 +1295,198 @@ export const Home = () => {
         {/* BLOCK 13: Interactive Leaflet Digital Map */}
         <section id="map" style={{ marginBottom: '4rem' }}>
           <InteractiveMap />
+        </section>
+
+        {/* BLOCK 13.5: Featured Category Section - Chợ Hải Sản Đồ Sơn */}
+        <section id="seafood-market" style={{ marginBottom: '4rem' }}>
+          {/* Header Banner */}
+          <div 
+            style={{
+              background: 'linear-gradient(135deg, #0c2340 0%, #0369a1 100%)',
+              borderRadius: '20px',
+              padding: '2rem 2.25rem',
+              color: '#ffffff',
+              marginBottom: '2rem',
+              boxShadow: '0 10px 30px rgba(3, 105, 161, 0.2)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1.5rem'
+            }}
+          >
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', fontSize: '11px', fontWeight: '800', padding: '4px 12px', borderRadius: '20px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span>🦀 🦞 🦪</span> {t('seafood_badge')}
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '26px', fontWeight: '800', margin: '4px 0 6px', color: '#ffffff' }}>
+                {t('seafood_title')}
+              </h2>
+              <p style={{ margin: 0, fontSize: '13.5px', color: '#bae6fd', opacity: 0.9 }}>
+                {t('seafood_desc')}
+              </p>
+            </div>
+
+            <Link 
+              to={`/posts?category=${encodeURIComponent('Chợ hải sản')}`}
+              style={{
+                backgroundColor: '#38bdf8',
+                color: '#0c2340',
+                fontWeight: '800',
+                fontSize: '13.5px',
+                padding: '10px 20px',
+                borderRadius: '10px',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(56, 189, 248, 0.35)',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+              className="hover-scale"
+            >
+              {t('btn_all_seafood')} &rarr;
+            </Link>
+          </div>
+
+          {/* Seafood Cards Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {loadingChoHaiSan ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                <i className="ti ti-loader animate-spin" style={{ fontSize: '24px', display: 'block', margin: '0 auto 10px', color: '#0284c7' }}></i>
+                {t('loading_seafood_list')}
+              </div>
+            ) : (choHaiSanPosts.length > 0 ? choHaiSanPosts : demoSeafoodList).map((post) => {
+              const imageUrl = post.image_url || post.image || "https://images.unsplash.com/photo-1559742811-822863c46f43?auto=format&fit=crop&w=600&q=80";
+              const publisherName = post.company_name || post.author_name || (currentLang === 'vi' ? 'Ngư dân Đồ Sơn' : 'Do Son Fishermen');
+              const subCategoryName = post.sub_category || (currentLang === 'vi' ? 'Hải sản tươi sống' : 'Fresh Seafood');
+
+              return (
+                <div 
+                  key={post.id}
+                  className="card-hover-effect"
+                  onClick={() => navigate(`/posts/${post.slug || post.id}`)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 14px rgba(12, 35, 64, 0.06)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                >
+                  {/* Image Container */}
+                  <div style={{ height: '190px', position: 'relative', overflow: 'hidden', backgroundColor: '#e2e8f0' }}>
+                    <img 
+                      src={imageUrl} 
+                      alt={post.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <span 
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '12px',
+                        backgroundColor: 'rgba(12, 35, 64, 0.85)',
+                        backdropFilter: 'blur(4px)',
+                        color: '#38bdf8',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        padding: '4px 10px',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      🦀 {subCategoryName}
+                    </span>
+                    {post.is_featured === 1 && (
+                      <span 
+                        style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          backgroundColor: '#f59e0b',
+                          color: '#000000',
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        {t('badge_featured') || 'NỔI BẬT ⭐'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Body Content */}
+                  <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <h3 
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#0c2340',
+                        lineHeight: '1.45',
+                        marginBottom: '8px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {post.title}
+                    </h3>
+
+                    {post.summary && (
+                      <p 
+                        style={{
+                          fontSize: '13px',
+                          color: '#64748b',
+                          lineHeight: '1.5',
+                          marginBottom: '1rem',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {post.summary}
+                      </p>
+                    )}
+
+                    {/* Footer Info */}
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="ti ti-building-store" style={{ color: '#0284c7', fontSize: '15px' }}></i>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                          {publisherName}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(evt) => {
+                          evt.stopPropagation();
+                          navigate(`/posts/${post.slug || post.id}`);
+                        }}
+                        style={{
+                          backgroundColor: '#0284c7',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 14px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)'
+                        }}
+                      >
+                        {t('btn_view_seafood_post')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         {/* BLOCK 14: Ecosystem Roles (2-Row Title) */}
