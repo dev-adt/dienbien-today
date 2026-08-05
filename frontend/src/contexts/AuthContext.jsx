@@ -152,6 +152,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('doson_admin_user');
       localStorage.removeItem('doson_creator_token');
       localStorage.removeItem('doson_creator_user');
+    } else if (data.role === 'creator') {
+      const creatorObj = data.creator || data.user;
+      setUser(creatorObj);
+      localStorage.setItem('doson_creator_token', data.token);
+      localStorage.setItem('doson_creator_user', JSON.stringify(creatorObj));
+      localStorage.removeItem('doson_admin_token');
+      localStorage.removeItem('doson_admin_user');
+      localStorage.removeItem('doson_member_token');
+      localStorage.removeItem('doson_member_user');
     }
 
     return data;

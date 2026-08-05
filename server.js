@@ -749,23 +749,25 @@ app.post('/api/auth/login', async (req, res) => {
       const creator = creatorRows[0];
       const match = await bcrypt.compare(password, creator.password_hash);
       if (match) {
-        // Cấp token Creator
+        // Cấp token Creator (30 ngày)
         const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 ngày
         await db.query(
           'INSERT INTO creator_sessions (creator_id, token, expires_at) VALUES (?, ?, ?)',
           [creator.id, token, expiresAt]
         );
+        const creatorData = {
+          id: creator.id,
+          name: creator.name,
+          username: creator.username,
+          requires_approval: Number(creator.requires_approval)
+        };
         return res.json({
           success: true,
           role: 'creator',
           token,
-          user: {
-            id: creator.id,
-            name: creator.name,
-            username: creator.username,
-            requires_approval: creator.requires_approval
-          }
+          user: creatorData,
+          creator: creatorData
         });
       }
     }
