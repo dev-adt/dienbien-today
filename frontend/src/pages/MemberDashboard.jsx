@@ -825,8 +825,8 @@ export const MemberDashboard = () => {
                           </button>
                         </div>
                       </div>
-                      <span className={`badge ${p.status === 'approved' ? 'approved' : p.status === 'rejected' ? 'rejected' : p.status === 'draft' ? 'draft' : 'pending'}`}>
-                        {p.status === 'approved' ? t('status_approved') : p.status === 'rejected' ? t('status_rejected') : p.status === 'draft' ? t('status_draft') : t('status_pending')}
+                      <span className={`badge ${(p.status === 'hidden' || (p.deadline && new Date(p.deadline) < new Date())) ? 'rejected' : p.status === 'approved' ? 'approved' : p.status === 'rejected' ? 'rejected' : p.status === 'draft' ? 'draft' : 'pending'}`}>
+                        {(p.status === 'hidden' || (p.deadline && new Date(p.deadline) < new Date())) ? '❌ Đã bị ẩn (Hết hạn)' : p.status === 'approved' ? t('status_approved') : p.status === 'rejected' ? t('status_rejected') : p.status === 'draft' ? t('status_draft') : t('status_pending')}
                       </span>
                     </div>
                   ))}
@@ -929,17 +929,6 @@ export const MemberDashboard = () => {
                 </div>
 
                 <div className="fg">
-                  <label>Nguồn bài viết / Link tham khảo (URL)</label>
-                  <input 
-                    type="url" 
-                    id="source_url" 
-                    value={newPostData.source_url} 
-                    onChange={handleNewPostChange} 
-                    placeholder="Ví dụ: https://baohaiphong.vn/... (Nếu có, bấm vào sẽ nhảy tới link gốc)" 
-                  />
-                </div>
-
-                <div className="fg">
                   <label>{t('modal_post_body_label')} <span style={{ color: 'var(--rose)' }}>*</span></label>
                   <RichTextEditor 
                     value={newPostData.body} 
@@ -954,7 +943,7 @@ export const MemberDashboard = () => {
                 </div>
 
                 <div className="fg">
-                  <label>{t('modal_post_deadline_label')}</label>
+                  <label>Hạn đăng bài (Tự động ẩn khi đến ngày cài đặt, để trống nếu hiển thị vĩnh viễn)</label>
                   <input type="date" id="deadline" value={newPostData.deadline} onChange={handleNewPostChange} />
                 </div>
 

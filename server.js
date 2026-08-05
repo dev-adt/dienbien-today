@@ -1665,12 +1665,20 @@ app.get('/api/posts', async (req, res) => {
       }
     }
 
+    // Tự động chuyển trạng thái bài viết đã hết hạn sang 'hidden' (Đã bị ẩn)
+    await db.query("UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline < NOW() AND status = 'approved'");
+
     let sql = `SELECT p.*, COALESCE(c.name, m.name, 'Ban Biên tập Đồ Sơn Today') AS company_name, COALESCE(m.tier, 'Standard') AS company_tier
                FROM posts p 
                LEFT JOIN members m ON p.member_id = m.id 
                LEFT JOIN content_creators c ON p.creator_id = c.id
                WHERE 1=1`;
     const params = [];
+
+    // Nếu lọc theo status 'approved' (hoặc khách vãng lai), chỉ lấy bài viết chưa quá hạn
+    if (status === 'approved' || (!status && !member_id)) {
+      sql += ' AND (p.deadline IS NULL OR p.deadline >= NOW())';
+    }
 
     if (status)       { sql += ' AND p.status = ?';       params.push(status); }
     if (member_id)    { sql += ' AND p.member_id = ?';    params.push(member_id); }

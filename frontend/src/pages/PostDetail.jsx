@@ -356,33 +356,6 @@ export const PostDetail = () => {
                 {t('date_posted_label')}: <strong style={{ color: 'var(--text-primary)' }}>{dateStr}</strong>
               </div>
 
-              {/* Source URL (Nguồn bài viết / Link gốc) */}
-              {post.source_url && (
-                <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
-                  <a
-                    href={post.source_url.startsWith('http') ? post.source_url : `https://${post.source_url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '13px',
-                      color: '#0284c7',
-                      background: 'rgba(2, 132, 199, 0.08)',
-                      border: '1px solid rgba(2, 132, 199, 0.2)',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontWeight: 600,
-                      wordBreak: 'break-all'
-                    }}
-                  >
-                    <i className="ti ti-external-link"></i> {currentLang === 'en' ? 'Article Source:' : 'Nguồn bài viết:'} {post.source_url}
-                  </a>
-                </div>
-              )}
-
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '18px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('translate_select_lang')}:</span>
@@ -469,7 +442,7 @@ export const PostDetail = () => {
                   width: 100% !important;
                   max-width: 100% !important;
                   aspect-ratio: 16 / 9;
-                  min-height: 520px;
+                  min-height: 480px;
                   height: auto;
                   border-radius: 12px;
                   border: none;
@@ -477,9 +450,24 @@ export const PostDetail = () => {
                   box-shadow: 0 12px 30px -5px rgba(0,0,0,0.12);
                   display: block;
                 }
+                .post-html-body video {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  max-height: 520px;
+                  border-radius: 12px;
+                  margin: 20px 0;
+                  box-shadow: 0 12px 30px -5px rgba(0,0,0,0.15);
+                  background: #000;
+                  display: block;
+                }
+                .post-html-body img {
+                  max-width: 100% !important;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                }
                 @media (max-width: 1024px) {
                   .post-html-body iframe {
-                    min-height: 400px;
+                    min-height: 380px;
                   }
                 }
                 @media (max-width: 640px) {

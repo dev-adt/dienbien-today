@@ -372,10 +372,10 @@ export const CreatorDashboard = () => {
                             borderRadius: '4px', 
                             fontWeight: 700, 
                             textTransform: 'uppercase',
-                            background: post.status === 'approved' ? 'rgba(16,185,129,0.1)' : post.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(148,163,184,0.1)',
-                            color: post.status === 'approved' ? '#10b981' : post.status === 'pending' ? 'var(--amber)' : 'var(--text-muted)'
+                            background: (post.status === 'hidden' || (post.deadline && new Date(post.deadline) < new Date())) ? 'rgba(239,68,68,0.15)' : post.status === 'approved' ? 'rgba(16,185,129,0.1)' : post.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(148,163,184,0.1)',
+                            color: (post.status === 'hidden' || (post.deadline && new Date(post.deadline) < new Date())) ? '#ef4444' : post.status === 'approved' ? '#10b981' : post.status === 'pending' ? 'var(--amber)' : 'var(--text-muted)'
                           }}>
-                            {post.status === 'approved' ? 'Đã duyệt' : post.status === 'pending' ? 'Chờ duyệt' : 'Bản nháp'}
+                            {(post.status === 'hidden' || (post.deadline && new Date(post.deadline) < new Date())) ? '❌ Đã bị ẩn (Hết hạn)' : post.status === 'approved' ? 'Đã duyệt' : post.status === 'pending' ? 'Chờ duyệt' : 'Bản nháp'}
                           </span>
                           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                             {post.category} • {post.sub_category}
@@ -505,15 +505,14 @@ export const CreatorDashboard = () => {
                   />
                 </div>
 
-                {/* Nguồn bài viết (URL) */}
+                {/* Hạn đăng bài */}
                 <div className="fg">
-                  <label style={{ fontSize: '13px', fontWeight: 600 }}>Nguồn bài viết / Link tham khảo (URL)</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600 }}>Hạn đăng bài (Tự động ẩn khi đến ngày cài đặt, để trống nếu hiển thị vĩnh viễn)</label>
                   <input 
-                    type="url" 
-                    id="source_url" 
-                    value={newPostData.source_url} 
+                    type="date" 
+                    id="deadline" 
+                    value={newPostData.deadline || ''} 
                     onChange={handleNewPostChange} 
-                    placeholder="Ví dụ: https://baohaiphong.vn/... (Nếu có, bấm vào sẽ nhảy tới link gốc)" 
                   />
                 </div>
 
