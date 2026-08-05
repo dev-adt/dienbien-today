@@ -42,12 +42,14 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
     }
   };
 
-  // Sync content from prop value when not in HTML code mode
+  // Sync content from prop value when not in HTML code mode, OR when toggling Fullscreen/WYSIWYG
   useEffect(() => {
-    if (!isHtmlMode && editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || '';
+    if (!isHtmlMode && editorRef.current) {
+      if (editorRef.current.innerHTML !== (value || '')) {
+        editorRef.current.innerHTML = value || '';
+      }
     }
-  }, [value, isHtmlMode]);
+  }, [value, isHtmlMode, isFullscreen]);
 
   // Click on image inside editor to select for quick resizing
   useEffect(() => {
@@ -67,18 +69,34 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
         currentRef.removeEventListener('click', handleEditorClick);
       }
     };
-  }, [isHtmlMode]);
+  }, [isHtmlMode, isFullscreen]);
+
+  // Toggle Fullscreen safely while preserving ALL typed content
+  const toggleFullscreen = () => {
+    // 1. Read current content from editor DOM before switching state
+    const currentHtml = isHtmlMode 
+      ? (value || '') 
+      : (editorRef.current ? editorRef.current.innerHTML : (value || ''));
+
+    // 2. Flush current content to parent state immediately
+    if (onChange) {
+      onChange(currentHtml);
+    }
+
+    // 3. Toggle fullscreen state
+    setIsFullscreen(prev => !prev);
+  };
 
   // Handle Fullscreen ESC key press
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+        toggleFullscreen();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen]);
+  }, [isFullscreen, isHtmlMode, value]);
 
   const execCommand = (command, val = null) => {
     if (isHtmlMode) return;
@@ -496,7 +514,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
         <div>
           <button 
             type="button" 
-            onClick={() => setIsFullscreen(!isFullscreen)} 
+            onClick={toggleFullscreen} 
             title={isFullscreen ? "Thu nhỏ về bình thường (ESC)" : "Phóng to toàn màn hình để dễ chỉnh sửa"} 
             style={{ 
               ...btnStyle, 
