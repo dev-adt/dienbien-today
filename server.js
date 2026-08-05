@@ -1665,16 +1665,15 @@ app.get('/api/posts', async (req, res) => {
       }
     }
 
-    // Tự động chuyển trạng thái bài viết đã hết hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
+    // Lấy ngày hiện tại dạng YYYY-MM-DD
+    const todayStr = new Date().toISOString().substring(0, 10);
+
+    // Tự động chuyển trạng thái bài viết quá hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
     try {
-      await db.query(`
-        UPDATE posts 
-        SET status = 'hidden' 
-        WHERE deadline IS NOT NULL 
-          AND deadline != '' 
-          AND status = 'approved'
-          AND DATE(deadline) < CURDATE()
-      `);
+      await db.query(
+        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline != '' AND status = 'approved' AND deadline < ?",
+        [todayStr]
+      );
     } catch (e) {
       console.warn('Cảnh báo tự động ẩn bài viết quá hạn:', e.message);
     }
@@ -1686,16 +1685,32 @@ app.get('/api/posts', async (req, res) => {
                WHERE 1=1`;
     const params = [];
 
-    // Nếu lọc theo status 'approved' (hoặc khách vãng lai), chỉ lấy bài viết chưa quá hạn
-    if (status === 'approved' || (!status && !member_id && !isAuthenticated)) {
-      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR DATE(p.deadline) >= CURDATE())";
+    // Nếu không phải tài khoản quản trị/tác giả đã xác thực -> mặc định lọc tin công khai đã duyệt & chưa quá hạn
+    if (!isAuthenticated) {
+      if (status && status !== 'all') {
+        sql += ' AND p.status = ?';
+        params.push(status);
+      } else {
+        sql += " AND p.status = 'approved'";
+      }
+      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR p.deadline >= ?)";
+      params.push(todayStr);
+    } else {
+      // Dành cho Admin / Member / Creator đã đăng nhập
+      if (status && status !== 'all') {
+        sql += ' AND p.status = ?';
+        params.push(status);
+      }
     }
 
-    if (status)       { sql += ' AND p.status = ?';       params.push(status); }
     if (member_id)    { sql += ' AND p.member_id = ?';    params.push(member_id); }
     if (category)     { sql += ' AND p.category = ?';     params.push(category); }
     if (sub_category) { sql += ' AND p.sub_category = ?'; params.push(sub_category); }
-    if (search)       { sql += ' AND MATCH(p.title,p.summary,p.body) AGAINST(? IN BOOLEAN MODE)'; params.push(`*${search}*`); }
+    if (search)       { 
+      sql += ' AND (p.title LIKE ? OR p.summary LIKE ? OR p.body LIKE ?)'; 
+      const searchPattern = `%${search}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
+    }
     sql += ' ORDER BY p.created_at DESC';
 
     const [rows] = await db.query(sql, params);
