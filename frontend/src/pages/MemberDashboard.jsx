@@ -240,7 +240,7 @@ export const MemberDashboard = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       alert(t('err_image_size'));
       return;
     }
@@ -265,7 +265,7 @@ export const MemberDashboard = () => {
         try {
           data = JSON.parse(responseText);
         } catch {
-          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 10MB).');
+          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 50MB).');
         }
 
         if (res.ok && data.success) {

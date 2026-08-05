@@ -189,8 +189,8 @@ export const RichTextEditor = ({ value, onChange, placeholder }) => {
       alert('Vui lòng chọn một tệp hình ảnh hợp lệ (PNG, JPG, WEBP).');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Dung lượng tệp vượt quá 10MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Dung lượng tệp vượt quá 50MB.');
       return;
     }
 

@@ -148,8 +148,8 @@ export const CreatorDashboard = () => {
       alert('Vui lòng chọn một tệp hình ảnh hợp lệ (PNG, JPG, WEBP).');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Dung lượng tệp vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Dung lượng tệp vượt quá 50MB. Vui lòng chọn tệp nhỏ hơn.');
       return;
     }
 
@@ -173,7 +173,7 @@ export const CreatorDashboard = () => {
         try {
           data = JSON.parse(responseText);
         } catch {
-          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 10MB).');
+          throw new Error('Máy chủ phản hồi lỗi. Vui lòng chọn tệp ảnh có dung lượng nhỏ hơn (dưới 50MB).');
         }
 
         if (res.ok && data.success) {
