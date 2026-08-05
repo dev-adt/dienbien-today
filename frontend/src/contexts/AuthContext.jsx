@@ -169,6 +169,11 @@ export const AuthProvider = ({ children }) => {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token }
         });
+      } else if (role === 'creator' && token) {
+        await fetch('/api/creator/logout', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
       }
     } catch (e) {
       console.error("Logout API call failed", e);

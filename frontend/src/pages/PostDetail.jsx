@@ -197,7 +197,8 @@ export const PostDetail = () => {
       setIsTranslated(false);
       setLoading(true);
       try {
-        const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+        const activeToken = token || localStorage.getItem('doson_creator_token') || localStorage.getItem('doson_member_token') || localStorage.getItem('doson_admin_token');
+        const headers = activeToken ? { 'Authorization': 'Bearer ' + activeToken } : {};
         const res = await fetch(`/api/posts/${id}`, { headers });
         if (res.ok) {
           const data = await res.json();

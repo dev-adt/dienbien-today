@@ -616,7 +616,7 @@ async function creatorAuthMiddleware(req, res, next) {
       `SELECT s.*, c.name, c.username, c.requires_approval
        FROM creator_sessions s 
        JOIN content_creators c ON s.creator_id = c.id 
-       WHERE s.token = ? AND s.expires_at > NOW()`, 
+       WHERE s.token = ? AND (s.expires_at > NOW() OR s.expires_at > UTC_TIMESTAMP())`, 
       [token]
     );
 
@@ -637,7 +637,7 @@ async function creatorAuthMiddleware(req, res, next) {
   }
 }
 
-// Middleware xác thực hỗn hợp (Admin HOẶC Member) — dùng cho AI Chat
+// Middleware xác thực hỗn hợp (Admin HOẶC Member HOẶC Creator)
 async function anyAuthMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -650,7 +650,7 @@ async function anyAuthMiddleware(req, res, next) {
     const [memberSessions] = await db.query(
       `SELECT s.*, m.name, m.email, m.status, m.tier, m.id as mid
        FROM member_sessions s JOIN members m ON s.member_id = m.id
-       WHERE s.token = ? AND s.expires_at > NOW()`, [token]
+       WHERE s.token = ? AND (s.expires_at > NOW() OR s.expires_at > UTC_TIMESTAMP())`, [token]
     );
     if (memberSessions.length) {
       req.authUser = {
@@ -668,14 +668,14 @@ async function anyAuthMiddleware(req, res, next) {
     const [adminSessions] = await db.query(
       `SELECT s.*, a.username, a.name, a.role
        FROM admin_sessions s JOIN admins a ON s.admin_id = a.id
-       WHERE s.token = ? AND s.expires_at > NOW()`, [token]
+       WHERE s.token = ? AND (s.expires_at > NOW() OR s.expires_at > UTC_TIMESTAMP())`, [token]
     );
     if (adminSessions.length) {
       req.authUser = {
         type: 'admin',
         id: adminSessions[0].admin_id,
         name: adminSessions[0].name,
-        tier: 'Platinum' // Admin không bị giới hạn
+        tier: 'Platinum'
       };
       return next();
     }
@@ -684,7 +684,7 @@ async function anyAuthMiddleware(req, res, next) {
     const [creatorSessions] = await db.query(
       `SELECT s.*, c.name, c.username, c.requires_approval
        FROM creator_sessions s JOIN content_creators c ON s.creator_id = c.id
-       WHERE s.token = ? AND s.expires_at > NOW()`, [token]
+       WHERE s.token = ? AND (s.expires_at > NOW() OR s.expires_at > UTC_TIMESTAMP())`, [token]
     );
     if (creatorSessions.length) {
       req.authUser = {
@@ -1894,12 +1894,22 @@ app.post('/api/creator/login', async (req, res) => {
   }
 });
 
-// Lấy thông tin profile Biên tập viên
-app.get('/api/creator/profile', creatorAuthMiddleware, async (req, res) => {
+// Lấy thông tin profile Biên tập viên (Profile check auth)
+app.get(['/api/creator/profile', '/api/creator/check-auth'], creatorAuthMiddleware, async (req, res) => {
   res.json({
     success: true,
     creator: req.creator
   });
+});
+
+// Biên tập viên Đăng xuất
+app.post('/api/creator/logout', creatorAuthMiddleware, async (req, res) => {
+  try {
+    await db.query('DELETE FROM creator_sessions WHERE token = ?', [req.creator.token]);
+    res.json({ success: true, message: 'Đã đăng xuất tài khoản Biên tập viên.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 2. Admin: Lấy danh sách Biên tập viên
