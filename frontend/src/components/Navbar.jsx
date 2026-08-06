@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTranslation } from '../contexts/LanguageContext';
+import { CATEGORIES_DATA } from '../constants/categories';
 
 export const Navbar = () => {
   const { role, user, logout } = useAuth();
@@ -9,8 +6,27 @@ export const Navbar = () => {
   const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [categories, setCategories] = useState(CATEGORIES_DATA);
+  const [hoveredCategory, setHoveredCategory] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            setCategories(data.data);
+          }
+        }
+      } catch (e) {
+        console.warn("Using fallback CATEGORIES_DATA", e);
+      }
+    };
+    fetchCats();
+  }, []);
 
   // Dark Mode Toggle initialization
   useEffect(() => {
@@ -37,18 +53,27 @@ export const Navbar = () => {
   };
 
   const navLinks = [
-    { label: 'Trang chủ', path: '/', anchor: '#hero' },
-    { label: 'Khám phá', path: '/posts?category=Khám phá Điện Biên', anchor: '#kham-pha' },
-    { label: 'Du lịch', path: '/posts?category=Du lịch', anchor: '#diem-den' },
-    { label: 'Đầu tư', path: '/posts?category=Đầu tư', anchor: '#dau-tu' },
-    { label: 'Doanh nghiệp', path: '/posts?category=Doanh nghiệp', anchor: '#doanh-nghiep' },
-    { label: 'Sản phẩm OCOP', path: '/posts?sub_category=Sản phẩm OCOP Điện Biên', anchor: '#ocop' },
-    { label: 'Văn hóa', path: '/posts?sub_category=Văn hóa %26 Lễ hội Hoa Ban', anchor: '#van-hoa' },
-    { label: 'Tin tức', path: '/posts?category=Tin tức - Sự kiện', anchor: '#tin-tuc' },
-    { label: 'AI Assistant', path: '/ai-chat', anchor: '#ai-assistant' },
-    { label: 'Thành viên', path: '/members', anchor: '#thanh-vien' },
-    { label: 'Liên hệ', path: '/', anchor: '#footer' },
+    { label: 'Trang chủ', path: '/', anchor: '#hero', catKey: null },
+    { label: 'Khám phá', path: '/posts?category=Khám phá Điện Biên', anchor: '#kham-pha', catKey: 'Khám phá Điện Biên' },
+    { label: 'Du lịch', path: '/posts?category=Du lịch', anchor: '#diem-den', catKey: 'Du lịch' },
+    { label: 'Đầu tư', path: '/posts?category=Đầu tư', anchor: '#dau-tu', catKey: 'Đầu tư' },
+    { label: 'Doanh nghiệp', path: '/posts?category=Doanh nghiệp', anchor: '#doanh-nghiep', catKey: 'Doanh nghiệp' },
+    { label: 'Sản phẩm OCOP', path: '/posts?sub_category=Sản phẩm OCOP Điện Biên', anchor: '#ocop', catKey: null },
+    { label: 'Văn hóa', path: '/posts?sub_category=Văn hóa %26 Lễ hội Hoa Ban', anchor: '#van-hoa', catKey: null },
+    { label: 'Tin tức', path: '/posts?category=Tin tức - Sự kiện', anchor: '#tin-tuc', catKey: 'Tin tức - Sự kiện' },
+    { label: 'AI Assistant', path: '/ai-chat', anchor: '#ai-assistant', catKey: null },
+    { label: 'Thành viên', path: '/members', anchor: '#thanh-vien', catKey: 'Cộng đồng' },
+    { label: 'Liên hệ', path: '/', anchor: '#footer', catKey: null },
   ];
+
+  const getSubcategories = (catKey) => {
+    if (!catKey) return [];
+    const cat = categories.find(c => c.name === catKey || (c.name && c.name.includes(catKey.split(' ')[0])));
+    if (!cat) return [];
+    if (cat.subs) return cat.subs.map(s => s.vi || s.name || s);
+    if (cat.subcategories) return cat.subcategories;
+    return [];
+  };
 
   const handleNavClick = (e, link) => {
     if (link.anchor && location.pathname === '/' && link.path === '/') {
@@ -137,27 +162,88 @@ export const Navbar = () => {
           <img src="/dienbien_logo.svg" alt="Dienbien.today" style={{ height: '44px', width: 'auto' }} />
         </Link>
 
-        {/* Desktop Navigation Menu (11 items according to specification requirement 7) */}
+        {/* Desktop Navigation Menu (11 items with dynamic subcategory dropdowns) */}
         <nav className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '1.1rem' }}>
-          {navLinks.map((link, idx) => (
-            <a
-              key={idx}
-              href={link.path + link.anchor}
-              onClick={(e) => handleNavClick(e, link)}
-              style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                fontSize: '0.86rem',
-                fontWeight: '600',
-                transition: 'color 0.2s ease',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#0B5FFF'}
-              onMouseLeave={(e) => e.target.style.color = 'var(--text-primary)'}
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link, idx) => {
+            const subs = getSubcategories(link.catKey);
+            const hasSubs = subs.length > 0;
+            return (
+              <div 
+                key={idx} 
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setHoveredCategory(idx)}
+                onMouseLeave={() => setHoveredCategory(null)}
+              >
+                <a
+                  href={link.path}
+                  onClick={(e) => handleNavClick(e, link)}
+                  style={{
+                    color: hoveredCategory === idx ? '#0B5FFF' : 'var(--text-primary)',
+                    textDecoration: 'none',
+                    fontSize: '0.86rem',
+                    fontWeight: '600',
+                    transition: 'color 0.2s ease',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 0'
+                  }}
+                >
+                  {link.label}
+                  {hasSubs && <i className="ti ti-chevron-down" style={{ fontSize: '10px', opacity: 0.7 }}></i>}
+                </a>
+
+                {/* Subcategories Dropdown */}
+                {hasSubs && hoveredCategory === idx && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '14px',
+                      padding: '8px 0',
+                      minWidth: '210px',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
+                      zIndex: 2000
+                    }}
+                  >
+                    {subs.map((sub, sIdx) => (
+                      <div
+                        key={sIdx}
+                        onClick={() => {
+                          setHoveredCategory(null);
+                          navigate(`/posts?category=${encodeURIComponent(link.catKey)}&sub_category=${encodeURIComponent(sub)}`);
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          fontSize: '0.82rem',
+                          fontWeight: '500',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'background-color 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--surface-0)';
+                          e.currentTarget.style.color = '#0B5FFF';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-primary)';
+                        }}
+                      >
+                        {sub}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Right Utilities */}

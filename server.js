@@ -476,6 +476,22 @@ db.query(`
       console.log('✅ Khởi tạo dữ liệu Chuyên mục & Lĩnh vực mặc định hoàn tất!');
     }
 
+    // Migration: Tự động cập nhật tên Chuyên mục & Lĩnh vực từ "Đồ Sơn" sang "Điện Biên" trong MySQL Database
+    try {
+      await db.query("UPDATE categories SET name = 'Khám phá Điện Biên', name_en = 'Explore Dien Bien' WHERE name LIKE '%Khám phá%'");
+      await db.query("UPDATE categories SET name = REPLACE(name, 'Đồ Sơn', 'Điện Biên'), name_en = REPLACE(name_en, 'Do Son', 'Dien Bien') WHERE name LIKE '%Đồ Sơn%'");
+      await db.query("UPDATE sub_categories SET name = 'Tổng quan Điện Biên', name_en = 'Dien Bien Overview' WHERE name LIKE '%Tổng quan%'");
+      await db.query("UPDATE sub_categories SET name = 'Di tích Lịch sử 1954', name_en = '1954 Historic Relics' WHERE name LIKE '%Lịch sử%' AND name LIKE '%Di tích%'");
+      await db.query("UPDATE sub_categories SET name = 'Văn hóa & Lễ hội Hoa Ban', name_en = 'Culture & Ban Flower Festival' WHERE name LIKE '%Văn hóa%' AND name LIKE '%Lễ hội%'");
+      await db.query("UPDATE sub_categories SET name = 'Ẩm thực Tây Bắc', name_en = 'Northwest Gastronomy' WHERE name LIKE '%Hải sản%' OR name LIKE '%Tây Bắc%'");
+      await db.query("UPDATE sub_categories SET name = 'Sản phẩm OCOP Điện Biên', name_en = 'Featured OCOP Products' WHERE name LIKE '%OCOP%'");
+      await db.query("UPDATE sub_categories SET name = 'Khu công nghiệp & Logistics', name_en = 'Industrial Parks & Logistics' WHERE name LIKE '%tiềm năng%' OR name LIKE '%Logistics%'");
+      await db.query("UPDATE sub_categories SET name = 'Người Điện Biên xa quê', name_en = 'Dien Bien Expatriates' WHERE name LIKE '%xa quê%'");
+      console.log('✅ Đã đồng bộ toàn bộ tên Chuyên mục & Lĩnh vực sang Điện Biên trong MySQL DB!');
+    } catch (migErr) {
+      console.warn('Cảnh báo migration categories:', migErr.message);
+    }
+
     // Tạo thư mục kiến thức
     const KB_DIR = path.join(__dirname, 'knowledge_base');
     if (!fs.existsSync(KB_DIR)) {

@@ -198,12 +198,121 @@ export const Home = () => {
     { name: 'Hợp tác社 Khoáng nóng U Va Resort', field: 'Nghỉ dưỡng & Health Care', logo: '♨️', aiDesc: 'Phát triển tổ hợp du lịch khoáng nóng tự nhiên và chăm sóc sức khỏe.' }
   ];
 
-  // Community Members (Specification Requirement 16)
-  const communityMembers = [
-    { name: 'Nguyễn Văn Hùng', role: 'Nhà đầu tư FDI', badge: 'Verified Investor', avatar: '👨‍💼', desc: 'Đầu tư dự án Năng lượng tái tạo & Resort Hồ Pá Khoang' },
-    { name: 'Lò Thị Mai', role: 'Nghệ nhân Múa Xòe', badge: 'Chuyên gia Văn hóa', avatar: '👩‍🌾', desc: 'Gìn giữ và quảng bá di sản Múa xòe Thái được UNESCO vinh danh' },
-    { name: 'David Miller', role: 'Du khách Quốc tế', badge: 'Travel Creator', avatar: '👨‍💻', desc: 'Đã trải nghiệm 14 ngày khám phá di sản lịch sử Điện Biên Phủ' }
+  // Default Featured Posts for Home
+  const defaultFeaturedPosts = [
+    {
+      id: 101,
+      title: 'Xúc tiến Đầu tư Dự án Nông nghiệp & Chế biến Lúa gạo Mường Thanh 2026',
+      summary: 'Tập đoàn Nông Lâm nghiệp Điện Biên kêu gọi đối tác đầu tư dự án nhà máy chế biến gạo xuất khẩu công nghệ cao.',
+      category: 'Đầu tư',
+      sub_category: 'Dự án & Cơ hội hợp tác',
+      company_name: 'Tập đoàn Nông Lâm nghiệp Điện Biên',
+      image_url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80',
+      aiSummary: 'Dự án quy mô 50.000 tấn/năm nâng tầm thương hiệu hạt gạo Seng Cù Mường Thanh ra thị trường quốc tế.'
+    },
+    {
+      id: 102,
+      title: 'Khai mạc Lễ hội Hoa Ban 2026 & Ngày hội Văn hóa Du lịch Điện Biên Phủ',
+      summary: 'UBND tỉnh Điện Biên chủ trì chuỗi 30 hoạt động văn hóa, thể thao, liên hoan múa xòe và hội chợ OCOP Tây Bắc.',
+      category: 'Khám phá Điện Biên',
+      sub_category: 'Văn hóa & Lễ hội Hoa Ban',
+      company_name: 'Công ty Du lịch Sinh thái Điện Biên Travel',
+      image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=800&q=80',
+      aiSummary: 'Dự kiến thu hút hơn 200.000 lượt du khách, mở ra cơ hội quảng bá di sản lịch sử 1954 vĩ đại.'
+    },
+    {
+      id: 103,
+      title: 'Mở rộng đường bay Cảng hàng không Điện Biên kết nối Hà Nội & TP.HCM',
+      summary: 'Sân bay Điện Biên nâng cấp đón dòng máy bay thân rộng A321, rút ngắn thời gian di chuyển còn 1 giờ bay.',
+      category: 'Tin tức - Sự kiện',
+      sub_category: 'Tin tức thời sự',
+      company_name: 'Ban Biên tập Dienbien.today',
+      image_url: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
+      aiSummary: 'Động lực bứt phá hạ tầng giao thông kết nối giao thương trực tiếp giữa Điện Biên với 2 đầu đất nước.'
+    }
   ];
+
+  // Default Home Members Cards
+  const defaultHomeMembers = [
+    {
+      id: 1,
+      name: 'Tập đoàn Nông Lâm nghiệp Điện Biên',
+      tier: 'Platinum',
+      industry: 'Nông nghiệp & OCOP',
+      city: 'TP. Điện Biên Phủ',
+      description: 'Chuyên sản xuất lúa gạo Seng Cù Mường Thanh chất lượng cao & xuất khẩu nông sản Tây Bắc.',
+      initials: 'DB',
+      bg: '#E6F1FB',
+      fg: '#0C447C'
+    },
+    {
+      id: 2,
+      name: 'Công ty Du lịch Sinh thái Điện Biên Travel',
+      tier: 'Platinum',
+      industry: 'Du lịch & Lữ hành',
+      city: 'TP. Điện Biên Phủ',
+      description: 'Chuyên tổ chức tour di sản lịch sử Điện Biên Phủ 1954, trải nghiệm văn hóa bản làng & trekking.',
+      initials: 'DT',
+      bg: '#EAF3DE',
+      fg: '#27500A'
+    },
+    {
+      id: 3,
+      name: 'Tập đoàn Đầu tư & Xây dựng Tây Bắc',
+      tier: 'Gold',
+      industry: 'Hạ tầng & Đô thị',
+      city: 'TP. Điện Biên Phủ',
+      description: 'Chủ đầu tư hạ tầng khu công nghiệp Nam Mường Thanh, cụm logistics Cửa khẩu Quốc tế Tây Trang.',
+      initials: 'TB',
+      bg: '#FAEEDA',
+      fg: '#633806'
+    },
+    {
+      id: 4,
+      name: 'Hợp tác xã Khoáng nóng U Va Resort',
+      tier: 'Gold',
+      industry: 'Nghỉ dưỡng & Health Care',
+      city: 'Huyện Điện Biên',
+      description: 'Tổ hợp du lịch sinh thái khoáng nóng tự nhiên U Va, tắm bùn trị liệu & homestay văn hóa Thái.',
+      initials: 'UV',
+      bg: '#EEEDFE',
+      fg: '#3C3489'
+    }
+  ];
+
+  const [homePosts, setHomePosts] = useState(defaultFeaturedPosts);
+  const [homeMembers, setHomeMembers] = useState(defaultHomeMembers);
+
+  useEffect(() => {
+    fetch('/api/posts?status=approved')
+      .then(res => res.json())
+      .then(data => {
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setHomePosts(data.data.slice(0, 3));
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/members?status=approved')
+      .then(res => res.json())
+      .then(data => {
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          const mapped = data.data.slice(0, 4).map(m => ({
+            id: m.id,
+            name: m.name,
+            tier: m.tier || 'Silver',
+            industry: m.industry || 'Doanh nghiệp',
+            city: m.city || 'TP. Điện Biên Phủ',
+            description: m.description || 'Hội viên doanh nghiệp chính thức trên Dienbien.today',
+            initials: (m.name || 'DB').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+            bg: m.tier === 'Platinum' ? '#E6F1FB' : m.tier === 'Gold' ? '#FAEEDA' : '#EAF3DE',
+            fg: m.tier === 'Platinum' ? '#0C447C' : m.tier === 'Gold' ? '#633806' : '#27500A'
+          }));
+          setHomeMembers(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
@@ -728,22 +837,61 @@ export const Home = () => {
             <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '6px' }}>Tin Tức & Truyền Thông AI</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-            <div style={{ backgroundColor: 'var(--surface-2)', borderRadius: '24px', border: '1px solid var(--border)', padding: '1.5rem' }}>
-              <span style={{ backgroundColor: '#0B5FFF', color: '#ffffff', fontSize: '0.75rem', fontWeight: '700', padding: '4px 10px', borderRadius: '10px' }}>TIN NỔI BẬT</span>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: '12px 0 8px 0' }}>Khai mạc Lễ hội Hoa Ban & Ngày hội Văn hóa Tây Bắc 2026</h3>
-              <div style={{ backgroundColor: 'var(--surface-0)', padding: '10px', borderRadius: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                <strong>🤖 AI Summary:</strong> Thu hút hơn 150.000 lượt khách quốc tế & nội địa, tổng doanh thu du lịch tăng 35% so với cùng kỳ.
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
+            {homePosts.map((post, pIdx) => (
+              <div 
+                key={pIdx} 
+                onClick={() => navigate('/posts')}
+                style={{ backgroundColor: 'var(--surface-2)', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-6px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                {post.image_url && (
+                  <div style={{ height: '180px', overflow: 'hidden' }}>
+                    <img src={post.image_url} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ backgroundColor: '#0B5FFF', color: '#ffffff', fontSize: '0.75rem', fontWeight: '700', padding: '4px 10px', borderRadius: '10px' }}>
+                      {post.category || 'TIN NỔI BẬT'}
+                    </span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post.company_name}</span>
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0 0 10px 0', lineHeight: 1.35 }}>{post.title}</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {post.summary}
+                  </p>
+                  {post.aiSummary && (
+                    <div style={{ backgroundColor: 'var(--surface-0)', padding: '10px 14px', borderRadius: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', borderLeft: '3px solid #0B5FFF' }}>
+                      <strong>🤖 AI Summary:</strong> {post.aiSummary}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
 
-            <div style={{ backgroundColor: 'var(--surface-2)', borderRadius: '24px', border: '1px solid var(--border)', padding: '1.5rem' }}>
-              <span style={{ backgroundColor: '#14B86A', color: '#ffffff', fontSize: '0.75rem', fontWeight: '700', padding: '4px 10px', borderRadius: '10px' }}>ĐẦU TƯ SỐ</span>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: '12px 0 8px 0' }}>Khai trương Nền tảng Thương hiệu Số Dienbien.today Powered by AI</h3>
-              <div style={{ backgroundColor: 'var(--surface-0)', padding: '10px', borderRadius: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                <strong>🤖 AI Summary:</strong> Tỉnh Điện Biên chính thức đưa trợ lý AI đa ngôn ngữ vào hỗ trợ du khách & nhà đầu tư 24/7.
-              </div>
-            </div>
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => navigate('/posts')}
+              style={{
+                backgroundColor: '#0B5FFF',
+                color: '#ffffff',
+                border: 'none',
+                padding: '12px 32px',
+                borderRadius: '16px',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                boxShadow: '0 8px 20px rgba(11, 95, 255, 0.3)',
+                transition: 'transform 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              Xem tất cả bài viết ➔
+            </button>
           </div>
         </div>
       </section>
@@ -756,12 +904,35 @@ export const Home = () => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-          {communityMembers.map((mem, idx) => (
-            <div key={idx} style={{ backgroundColor: 'var(--surface-2)', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>{mem.avatar}</div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>{mem.name}</h3>
-              <span style={{ backgroundColor: 'var(--primary-glow)', color: '#0B5FFF', fontSize: '0.75rem', fontWeight: '700', padding: '3px 10px', borderRadius: '10px', display: 'inline-block', margin: '6px 0 10px 0' }}>{mem.badge}</span>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{mem.desc}</p>
+          {homeMembers.map((mem, idx) => (
+            <div key={idx} style={{ backgroundColor: 'var(--surface-2)', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow)' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: mem.bg, color: mem.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: '800', margin: '0 auto 12px auto', border: '2px solid var(--border)' }}>
+                {mem.initials}
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '4px' }}>{mem.name}</h3>
+              <span style={{ backgroundColor: mem.tier === 'Platinum' ? 'rgba(11,95,255,0.15)' : mem.tier === 'Gold' ? 'rgba(246,184,0,0.15)' : 'rgba(20,184,106,0.15)', color: mem.tier === 'Platinum' ? '#0B5FFF' : mem.tier === 'Gold' ? '#D97706' : '#14B86A', fontSize: '0.75rem', fontWeight: '800', padding: '3px 12px', borderRadius: '12px', display: 'inline-block', margin: '4px 0 10px 0' }}>
+                HỘI VIÊN {mem.tier.toUpperCase()}
+              </span>
+              <p style={{ fontSize: '0.78rem', color: '#0B5FFF', fontWeight: '700', margin: '0 0 8px 0' }}>{mem.industry} · {mem.city}</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                {mem.description}
+              </p>
+              <button
+                onClick={() => navigate('/members')}
+                style={{
+                  width: '100%',
+                  background: 'var(--surface-0)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                  padding: '8px 0',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                Liên hệ hợp tác 🤝
+              </button>
             </div>
           ))}
         </div>
