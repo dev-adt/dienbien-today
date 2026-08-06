@@ -677,7 +677,6 @@ export const Home = () => {
                     
                     {/* AI Introduction Box */}
                     <div style={{ backgroundColor: 'var(--surface-0)', borderLeft: '4px solid #14B86A', padding: '10px 14px', borderRadius: '0 12px 12px 0', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
-                      <span style={{ fontWeight: '700', color: '#14B86A' }}>🤖 AI Giới thiệu: </span>
                       {dest.aiSummary}
                     </div>
                   </div>
@@ -811,7 +810,6 @@ export const Home = () => {
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '10px' }}>🏭 {prod.producer}</div>
 
                 <div style={{ backgroundColor: 'var(--surface-0)', padding: '10px', borderRadius: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: '1.4' }}>
-                  <span style={{ color: '#14B86A', fontWeight: '700' }}>🤖 AI Thẩm định: </span>
                   {prod.aiIntro}
                 </div>
               </div>
@@ -959,7 +957,7 @@ export const Home = () => {
                   </p>
                   {post.aiSummary && (
                     <div style={{ backgroundColor: 'var(--surface-0)', padding: '10px 14px', borderRadius: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', borderLeft: '3px solid #0B5FFF' }}>
-                      <strong>🤖 AI Summary:</strong> {post.aiSummary}
+                     {post.aiSummary}
                     </div>
                   )}
                 </div>
@@ -1066,7 +1064,6 @@ export const Home = () => {
             <div style={{ padding: '2rem' }}>
               <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '8px' }}>{selectedDestination.name}</h2>
               <div style={{ backgroundColor: 'var(--surface-0)', padding: '14px', borderRadius: '14px', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px', borderLeft: '4px solid #0B5FFF' }}>
-                <strong>🤖 Trợ lý AI Điện Biên đánh giá: </strong>
                 {selectedDestination.aiSummary}
               </div>
               <p style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '24px' }}>

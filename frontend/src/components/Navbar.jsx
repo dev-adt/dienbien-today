@@ -179,19 +179,11 @@ export const Navbar = () => {
                 onMouseLeave={() => setHoveredCategory(null)}
               >
                 <a
+                  className="desktop-menu-item"
                   href={link.path}
                   onClick={(e) => handleNavClick(e, link)}
                   style={{
-                    color: hoveredCategory === idx ? '#0B5FFF' : 'var(--text-primary)',
-                    textDecoration: 'none',
-                    fontSize: '0.86rem',
-                    fontWeight: '600',
-                    transition: 'color 0.2s ease',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '6px 0'
+                    color: hoveredCategory === idx ? '#0B5FFF' : 'var(--text-primary)'
                   }}
                 >
                   {link.label}
@@ -484,7 +476,38 @@ export const Navbar = () => {
       )}
 
       <style>{`
-        @media (max-width: 1200px) {
+        .desktop-menu-item {
+          color: var(--text-primary);
+          text-decoration: none;
+          font-size: 0.85rem;
+          font-weight: 600;
+          transition: color 0.2s ease;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          padding: 6px 0;
+        }
+
+        .desktop-menu {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+        }
+
+        @media (max-width: 1380px) {
+          .desktop-menu {
+            gap: 0.4rem !important;
+          }
+          .desktop-menu-item {
+            font-size: 0.77rem !important;
+          }
+          .public-container {
+            padding: 0.65rem 0.75rem !important;
+          }
+        }
+
+        @media (max-width: 1024px) {
           .desktop-menu { display: none !important; }
           .mobile-menu-btn { display: block !important; }
         }
