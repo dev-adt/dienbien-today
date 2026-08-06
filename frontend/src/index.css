@@ -1,59 +1,76 @@
-/* Đồ Sơn — Redesigned Premium & Modern Design System */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+/* Dienbien.today — Digital City Brand Powered by AI Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 *{box-sizing:border-box;margin:0;padding:0}
 
 :root {
-  /* Fonts */
-  --font-title: 'Outfit', system-ui, -apple-system, sans-serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* Fonts according to Specification Requirement 4 */
+  --font-title: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Color Tokens (Shared Brand Palette) */
-  --primary: #0284C7;
-  --primary-glow: rgba(2, 132, 199, 0.25);
-  --primary-dark: #0369A1;
-  --primary-light: #38BDF8;
+  /* Color Tokens according to Specification Requirement 3 */
+  --primary: #0B5FFF;          /* Deep Blue: Technology & AI */
+  --primary-glow: rgba(11, 95, 255, 0.25);
+  --primary-dark: #0040C1;
+  --primary-light: #4A8CFF;
   
-  --neon-cyan: #0EA5E9;
-  --neon-glow: rgba(14, 165, 233, 0.2);
+  --secondary: #14B86A;        /* Emerald Green: Northwest Forests & Sustainability */
+  --secondary-glow: rgba(20, 184, 106, 0.25);
+  --secondary-dark: #0E854B;
+  --secondary-light: #44D891;
 
-  --emerald: #10B981;
-  --emerald-bg: rgba(16, 185, 129, 0.1);
-  --emerald-dark: #059669;
+  --accent: #F6B800;           /* Gold: Historic Victory, Sun & Culture */
+  --accent-glow: rgba(246, 184, 0, 0.3);
+  --accent-dark: #C69400;
+  --accent-light: #FFD700;
 
-  --amber: #F59E0B;
-  --amber-bg: rgba(245, 158, 11, 0.1);
-  --amber-dark: #D97706;
-
-  --rose: #EF4444;
-  --rose-bg: rgba(239, 68, 68, 0.1);
-  --rose-dark: #DC2626;
-
-  /* Default Theme: Premium Ocean/Sky Blue (Light, Fresh) */
-  --bg-base: #EBF4FC;
+  /* Light Theme */
+  --bg-base: #F7F9FC;
   --surface-2: #FFFFFF;
-  --surface-0: #D8ECFD;
-  --surface-1: #C2E0FC;
+  --surface-0: #EDF2F9;
+  --surface-1: #E2E8F0;
   
-  --text-primary: #0C2340;
-  --text-secondary: #2C4A6F;
-  --text-muted: #5C7B9E;
+  --text-primary: #0E1320;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
   
-  --border: rgba(12, 35, 64, 0.08);
-  --border-strong: rgba(12, 35, 64, 0.16);
+  --border: rgba(14, 19, 32, 0.08);
+  --border-strong: rgba(14, 19, 32, 0.16);
 
   /* Glassmorphism Parameters */
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(12, 35, 64, 0.08);
-  --glass-glow: rgba(2, 132, 199, 0.04);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(11, 95, 255, 0.12);
+  --glass-glow: rgba(11, 95, 255, 0.06);
 
-  /* Shared parameters */
-  --radius: 12px;
-  --radius-lg: 20px;
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  --shadow: 0 10px 30px -10px rgba(12, 35, 64, 0.08);
-  --shadow-lg: 0 20px 40px -15px rgba(12, 35, 64, 0.12);
-  --shadow-light: 0 8px 24px -8px rgba(12, 35, 64, 0.04);
+  /* Parameters */
+  --radius: 14px;
+  --radius-lg: 24px;
+  --transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 12px 32px -10px rgba(11, 95, 255, 0.1);
+  --shadow-lg: 0 24px 48px -15px rgba(14, 19, 32, 0.15);
+  --shadow-light: 0 8px 24px -8px rgba(14, 19, 32, 0.04);
+}
+
+/* Dark Theme according to Specification Requirement 3 (#0E1320) */
+[data-theme="dark"] {
+  --bg-base: #0E1320;
+  --surface-2: #161D2F;
+  --surface-0: #1B243B;
+  --surface-1: #232E48;
+  
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --glass-bg: rgba(22, 29, 47, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-glow: rgba(11, 95, 255, 0.15);
+
+  --shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 24px 48px -15px rgba(0, 0, 0, 0.6);
 }
 
 /* Card Hover Micro-animations */
@@ -2615,6 +2632,91 @@ select option {
 .public-body .fg label {
   color: var(--text-secondary) !important;
 }
+
+/* Dienbien.today Custom Animations & Requirement Utility Classes */
+
+/* Floating AI Pulse Animation */
+@keyframes aiPulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(11, 95, 255, 0.6), 0 10px 25px rgba(11, 95, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(11, 95, 255, 0), 0 15px 35px rgba(11, 95, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(11, 95, 255, 0), 0 10px 25px rgba(11, 95, 255, 0.4);
+  }
+}
+
+.ai-bot-pulse {
+  animation: aiPulseGlow 2.5s infinite ease-in-out;
+}
+
+/* Floating animation */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: floatY 4s ease-in-out infinite;
+}
+
+/* Typing cursor animation */
+@keyframes blinkCursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background-color: var(--accent);
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: blinkCursor 0.8s infinite;
+}
+
+/* Hover Zoom Card effect (Specification Item 9 & 10) */
+.hover-zoom-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.hover-zoom-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px -10px rgba(11, 95, 255, 0.2);
+}
+
+.hover-zoom-card img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-zoom-card:hover img {
+  transform: scale(1.1);
+}
+
+/* 3D Card Effect for OCOP (Specification Item 13) */
+.ocop-card-3d {
+  perspective: 1000px;
+  transition: all 0.4s ease;
+}
+
+.ocop-card-3d:hover {
+  transform: rotateX(4deg) rotateY(-4deg) translateY(-6px);
+  box-shadow: 0 20px 35px -10px rgba(20, 184, 106, 0.25);
+}
+
+/* Glassmorphism Badge & Overlay */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
 .public-body .fg input,
 .public-body .fg select,
 .public-body .fg textarea {

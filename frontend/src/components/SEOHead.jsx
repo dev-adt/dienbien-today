@@ -17,11 +17,11 @@ const SEOHead = ({
   schemaData
 }) => {
   useEffect(() => {
-    const defaultSiteName = 'Đồ Sơn Today — Cổng thông tin & Kết nối Doanh nghiệp';
-    const siteUrl = 'https://doson.today';
+    const defaultSiteName = 'Dienbien.today — Digital City Brand Powered by AI';
+    const siteUrl = 'https://dienbien.today';
 
     // 1. Set Document Title
-    const fullTitle = title ? `${title} | Đồ Sơn Today` : defaultSiteName;
+    const fullTitle = title ? `${title} | Dienbien.today` : defaultSiteName;
     document.title = fullTitle;
 
     // Helper function to create or update meta tags
@@ -48,8 +48,8 @@ const SEOHead = ({
     };
 
     // 2. Standard Meta Tags
-    const pageDesc = description || 'Nền tảng kết nối cơ hội kinh doanh, quảng bá thương hiệu và hỗ trợ hội viên doanh nghiệp tại Đồ Sơn, Hải Phòng.';
-    const pageKeywords = keywords || 'Đồ Sơn, Hải Phòng, doanh nghiệp Đồ Sơn, thương mại, kết nối đối tác, kết nối kinh doanh';
+    const pageDesc = description || 'Nền tảng thương hiệu số AI tiên phong của tỉnh Điện Biên. Khám phá du lịch, di sản lịch sử 1954, sản phẩm OCOP & xúc tiến đầu tư.';
+    const pageKeywords = keywords || 'Điện Biên, Dienbien.today, du lịch Điện Biên, Đồi A1, Hầm Đờ Cát, Mường Phăng, OCOP Điện Biên, xúc tiến đầu tư Điện Biên';
     const canonicalUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : window.location.href;
     const ogImage = image || `${siteUrl}/assets/og-image.jpg`;
 

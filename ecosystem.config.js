@@ -7,7 +7,7 @@
 module.exports = {
   apps: [
     {
-      name        : 'doson-today',
+      name        : 'dienbien-today',
       script      : 'server.js',
       instances   : 1,           // tăng lên 'max' nếu muốn cluster
       exec_mode   : 'fork',
@@ -16,7 +16,7 @@ module.exports = {
 
       env: {
         NODE_ENV : 'production',
-        PORT     : 3013,
+        PORT     : 3016,
       },
 
       // Log
