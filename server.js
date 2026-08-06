@@ -476,6 +476,30 @@ db.query(`
       console.log('✅ Khởi tạo dữ liệu Chuyên mục & Lĩnh vực mặc định hoàn tất!');
     }
 
+    // Auto-seed category "Ứng dụng AI" if not present in DB
+    try {
+      const [aiCatExists] = await db.query("SELECT id FROM categories WHERE name = 'Ứng dụng AI'");
+      if (!aiCatExists.length) {
+        const [aiRes] = await db.query("INSERT INTO categories (name, name_en, order_index, status) VALUES ('Ứng dụng AI', 'AI Applications', 7, 'active')");
+        const aiCatId = aiRes.insertId;
+        const aiSubs = [
+          { vi: 'AI cho người dân', en: 'AI for Citizens' },
+          { vi: 'AI cho chính quyền', en: 'AI for Government' },
+          { vi: 'AI cho doanh nghiệp', en: 'AI for Enterprises' },
+          { vi: 'NVIDIA Deep Learning Institute', en: 'NVIDIA Deep Learning Institute' }
+        ];
+        for (let i = 0; i < aiSubs.length; i++) {
+          await db.query(
+            "INSERT INTO sub_categories (category_id, name, name_en, order_index, status) VALUES (?, ?, ?, ?, 'active')",
+            [aiCatId, aiSubs[i].vi, aiSubs[i].en, i + 1]
+          );
+        }
+        console.log('✅ Đã tạo Chuyên mục "Ứng dụng AI" và các Lĩnh vực con thành công!');
+      }
+    } catch (aiCatErr) {
+      console.warn('Cảnh báo tạo Chuyên mục Ứng dụng AI:', aiCatErr.message);
+    }
+
     // Migration: Tự động cập nhật tên Chuyên mục & Lĩnh vực từ "Đồ Sơn" sang "Điện Biên" trong MySQL Database
     try {
       await db.query("UPDATE categories SET name = 'Khám phá Điện Biên', name_en = 'Explore Dien Bien' WHERE name LIKE '%Khám phá%'");

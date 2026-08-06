@@ -56,37 +56,39 @@ export const Navbar = () => {
     return name.trim().split(/\s+/).map(w => w[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const navLinks = [
-    { label: 'Trang chủ', path: '/', anchor: '#hero', catKey: null },
-    { label: 'Khám phá', path: '/posts?category=Khám phá Điện Biên', anchor: '#kham-pha', catKey: 'Khám phá Điện Biên' },
-    { label: 'Du lịch', path: '/posts?category=Du lịch', anchor: '#diem-den', catKey: 'Du lịch' },
-    { label: 'Đầu tư', path: '/posts?category=Đầu tư', anchor: '#dau-tu', catKey: 'Đầu tư' },
-    { label: 'Doanh nghiệp', path: '/posts?category=Doanh nghiệp', anchor: '#doanh-nghiep', catKey: 'Doanh nghiệp' },
-    { label: 'Sản phẩm OCOP', path: '/posts?sub_category=Sản phẩm OCOP Điện Biên', anchor: '#ocop', catKey: null },
-    { label: 'Văn hóa', path: '/posts?sub_category=Văn hóa %26 Lễ hội Hoa Ban', anchor: '#van-hoa', catKey: null },
-    { label: 'Tin tức', path: '/posts?category=Tin tức - Sự kiện', anchor: '#tin-tuc', catKey: 'Tin tức - Sự kiện' },
-    { label: 'AI Assistant', path: '/ai-chat', anchor: '#ai-assistant', catKey: null },
-    { label: 'Thành viên', path: '/members', anchor: '#thanh-vien', catKey: 'Cộng đồng' },
-    { label: 'Liên hệ', path: '/', anchor: '#footer', catKey: null },
+  // Dynamic Navigation Links generated directly from Admin categories API
+  const dynamicNavLinks = [
+    { label: 'Trang chủ', path: '/', catObj: null },
+    ...categories
+      .filter(c => c.status !== 'inactive')
+      .map(c => ({
+        label: c.name,
+        path: `/posts?category=${encodeURIComponent(c.name)}`,
+        catObj: c
+      })),
+    { label: 'AI Assistant', path: '/ai-chat', catObj: null },
+    { label: 'Thành viên', path: '/members', catObj: null },
   ];
 
-  const getSubcategories = (catKey) => {
-    if (!catKey) return [];
-    const cat = categories.find(c => c.name === catKey || (c.name && c.name.includes(catKey.split(' ')[0])));
-    if (!cat) return [];
-    if (cat.subs) return cat.subs.map(s => s.vi || s.name || s);
-    if (cat.subcategories) return cat.subcategories;
+  const getSubcategories = (catObj) => {
+    if (!catObj) return [];
+    if (Array.isArray(catObj.subcategories)) {
+      return catObj.subcategories.map(s => typeof s === 'string' ? s : (s.name || s.vi || ''));
+    }
+    if (Array.isArray(catObj.sub_objects)) {
+      return catObj.sub_objects.filter(s => s.status !== 'inactive').map(s => s.name);
+    }
+    if (Array.isArray(catObj.subs)) {
+      return catObj.subs.map(s => typeof s === 'string' ? s : (s.vi || s.name || ''));
+    }
     return [];
   };
 
   const handleNavClick = (e, link) => {
-    if (link.anchor && location.pathname === '/' && link.path === '/') {
+    if (link.path === '/' && location.pathname === '/') {
       e.preventDefault();
-      const targetEl = document.querySelector(link.anchor);
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setMobileMenuOpen(false);
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setMobileMenuOpen(false);
     } else {
       setMobileMenuOpen(false);
       navigate(link.path);
@@ -166,10 +168,10 @@ export const Navbar = () => {
           <img src="/dienbien_logo.svg" alt="Dienbien.today" style={{ height: '44px', width: 'auto' }} />
         </Link>
 
-        {/* Desktop Navigation Menu (11 items with dynamic subcategory dropdowns) */}
+        {/* Desktop Navigation Menu (Dynamic items from Admin Categories API) */}
         <nav className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '1.1rem' }}>
-          {navLinks.map((link, idx) => {
-            const subs = getSubcategories(link.catKey);
+          {dynamicNavLinks.map((link, idx) => {
+            const subs = getSubcategories(link.catObj);
             const hasSubs = subs.length > 0;
             return (
               <div 
@@ -220,7 +222,7 @@ export const Navbar = () => {
                         key={sIdx}
                         onClick={() => {
                           setHoveredCategory(null);
-                          navigate(`/posts?category=${encodeURIComponent(link.catKey)}&sub_category=${encodeURIComponent(sub)}`);
+                          navigate(`/posts?category=${encodeURIComponent(link.label)}&sub_category=${encodeURIComponent(sub)}`);
                         }}
                         style={{
                           padding: '8px 16px',
