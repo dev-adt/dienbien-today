@@ -162,7 +162,16 @@ export const Navbar = () => {
       {/* Main Navbar */}
       <div className="public-container" style={{ margin: '0 auto', maxWidth: '1360px', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         {/* Brand Logo */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link
+          to="/"
+          onClick={(e) => {
+            if (location.pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+        >
           <img src="/dienbien_logo.svg" alt="Dienbien.today" style={{ height: '44px', width: 'auto' }} />
         </Link>
 

@@ -43,6 +43,21 @@ export const Home = () => {
     loading: true
   });
 
+  // Scroll To Top State
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Modal State for Destination & Detail
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -472,10 +487,7 @@ export const Home = () => {
             </a>
 
             <button
-              onClick={() => {
-                const el = document.getElementById('ai-assistant');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
+              onClick={() => navigate('/ai-chat')}
               style={{
                 background: 'rgba(255, 255, 255, 0.12)',
                 color: '#ffffff',
@@ -825,61 +837,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* SECTION 6: DOANH NGHIỆP ĐIỆN BIÊN (Specification Requirement 12: Directory) */}
-      <section id="doanh-nghiep" style={{ padding: '5rem 1.5rem', backgroundColor: 'var(--surface-0)' }}>
-        <div style={{ maxWidth: '1360px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <span style={{ color: '#0B5FFF', fontWeight: '800', letterSpacing: '0.1em', fontSize: '0.85rem' }}>ENTERPRISE DIRECTORY</span>
-            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '6px' }}>Doanh Nghiệp Tiêu Biểu</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', maxWidth: '600px', margin: '8px auto 0 auto' }}>
-              Danh bạ các doanh nghiệp hàng đầu tại Điện Biên được xác thực hồ sơ số bởi AI.
-            </p>
-          </div>
-
-          <div className="grid-4-cols">
-            {enterpriseList.map((ent, idx) => (
-              <div
-                key={idx}
-                style={{
-                  backgroundColor: 'var(--surface-2)',
-                  borderRadius: '20px',
-                  border: '1px solid var(--border)',
-                  padding: '1.5rem',
-                  boxShadow: 'var(--shadow)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: 'var(--surface-0)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem' }}>{ent.logo}</div>
-                  <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: '800' }}>{ent.name}</h3>
-                    <span style={{ fontSize: '0.78rem', color: '#0B5FFF', fontWeight: '700' }}>{ent.field}</span>
-                  </div>
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '14px' }}>
-                  {ent.aiDesc}
-                </p>
-                <button
-                  onClick={() => alert(`Đang kết nối tới đại diện doanh nghiệp ${ent.name}...`)}
-                  style={{
-                    width: '100%',
-                    background: 'var(--surface-0)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                    padding: '8px 0',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Liên hệ hợp tác 🤝
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* SECTION 7: VĂN HÓA & DI SẢN (Specification Requirement 14: Gallery & Timeline) */}
       <section id="van-hoa" style={{ padding: '5rem 1.5rem', maxWidth: '1360px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
@@ -1110,6 +1067,37 @@ export const Home = () => {
             <InteractiveMap />
           </div>
         </div>
+      )}
+
+      {/* Floating Scroll To Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          title="Cuộn lên đầu trang"
+          style={{
+            position: 'fixed',
+            bottom: '90px',
+            right: '24px',
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            backgroundColor: '#0B5FFF',
+            color: '#ffffff',
+            border: 'none',
+            boxShadow: '0 8px 24px rgba(11, 95, 255, 0.4)',
+            cursor: 'pointer',
+            zIndex: 9990,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.2rem',
+            transition: 'transform 0.2s ease, opacity 0.3s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <i className="ti ti-arrow-up"></i>
+        </button>
       )}
 
       {/* Floating AI Bot Assistant */}

@@ -90,11 +90,11 @@ export const Footer = () => {
               <img src="/dienbien_logo.svg" alt="Dienbien.today" style={{ height: '42px', width: 'auto' }} />
             </div>
             <p style={{ lineHeight: '1.6', marginBottom: '1.2rem', color: '#94A3B8', fontSize: '12.5px' }}>
-              Cổng thông tin & Nền tảng Thương hiệu Số powered by AI chính thức đại diện tỉnh Điện Biên. Kết nối Việt Nam và Thế giới.
+              Cổng thông tin & Nền tảng Thương hiệu Số chính thức đại diện tỉnh Điện Biên. Kết nối Việt Nam và Thế giới.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#CBD5E1', marginBottom: '1.2rem' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}><i className="ti ti-map-pin" style={{ color: '#0B5FFF', marginTop: '2px' }}></i> TP. Điện Biên Phủ, Tỉnh Điện Biên</div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}><i className="ti ti-mail" style={{ color: '#14B86A' }}></i> hotro@dienbien.today</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}><i className="ti ti-map-pin" style={{ color: '#0B5FFF', marginTop: '2px' }}></i> Phường Điện Biên Phủ, Tỉnh Điện Biên</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}><i className="ti ti-mail" style={{ color: '#14B86A' }}></i> info@dienbien.today</div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}><i className="ti ti-phone" style={{ color: '#F6B800' }}></i> (0215) 3.825.888</div>
             </div>
           </div>
