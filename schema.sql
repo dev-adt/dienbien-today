@@ -1,11 +1,12 @@
 -- ============================================
--- Đồ Sơn Today — MySQL Database Schema
--- Database: doson | User: doson_db
--- Chạy: mysql -u doson_db -p doson < schema.sql
+-- Dienbien.today — MySQL Database Schema
+-- Database: dienbien | User: dienbien_user
+-- Import qua aaPanel (phpMyAdmin) hoặc lệnh:
+-- mysql -u dienbien_user -p dienbien < schema.sql
 -- ============================================
 
--- Database đã được tạo qua aaPanel, chỉ cần USE
-USE doson;
+-- Tên Database đã tạo trên aaPanel
+USE dienbien;
 
 -- ── Bảng hội viên ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS members (
