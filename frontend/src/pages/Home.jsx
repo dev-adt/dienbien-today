@@ -13,38 +13,25 @@ export const Home = () => {
   const { t, currentLang } = useTranslation();
   const navigate = useNavigate();
 
-  // Typing Effect State (Requirement 6)
-  const typingTexts = [
-    "Điện Biên kết nối Việt Nam và Thế giới bằng Trí tuệ nhân tạo",
-    "Hành trình Di sản Lịch sử 1954 vĩ đại & Văn hóa Tây Bắc",
-    "Điểm đến Xúc tiến Đầu tư & Thương mại Số hàng đầu"
-  ];
-  const [textIndex, setTextIndex] = useState(0);
+  // Typing Effect State (Types once on enter, then stays static on 1st sentence)
+  const heroTitleText = "Điện Biên kết nối Việt Nam và Thế giới bằng Trí tuệ nhân tạo";
   const [charIndex, setCharIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [displayText, setDisplayText] = useState('');
+  const [isTypingDone, setIsTypingDone] = useState(false);
 
-  // Typing Effect Loop
   useEffect(() => {
-    const currentFullText = typingTexts[textIndex];
-    let speed = isDeleting ? 30 : 60;
+    if (isTypingDone) return;
 
-    if (!isDeleting && charIndex === currentFullText.length) {
-      speed = 2500; // Pause at full text
-      setIsDeleting(true);
-    } else if (isDeleting && charIndex === 0) {
-      setIsDeleting(false);
-      setTextIndex((prev) => (prev + 1) % typingTexts.length);
-      speed = 500;
+    if (charIndex < heroTitleText.length) {
+      const timer = setTimeout(() => {
+        setDisplayText(heroTitleText.substring(0, charIndex + 1));
+        setCharIndex((prev) => prev + 1);
+      }, 40);
+      return () => clearTimeout(timer);
+    } else {
+      setIsTypingDone(true);
     }
-
-    const timer = setTimeout(() => {
-      setDisplayText(currentFullText.substring(0, isDeleting ? charIndex - 1 : charIndex + 1));
-      setCharIndex((prev) => (isDeleting ? prev - 1 : prev + 1));
-    }, speed);
-
-    return () => clearTimeout(timer);
-  }, [charIndex, isDeleting, textIndex]);
+  }, [charIndex, isTypingDone]);
 
   // Realtime Weather State (Open-Meteo API for Điện Biên Phủ: 21.3857, 103.0188)
   const [weatherData, setWeatherData] = useState({
@@ -295,7 +282,7 @@ export const Home = () => {
             }}
           >
             {displayText}
-            <span className="typing-cursor"></span>
+            {!isTypingDone && <span className="typing-cursor"></span>}
           </h1>
 
           {/* Subtitle */}

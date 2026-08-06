@@ -116,13 +116,20 @@
 }
 
 /* BASE STYLING */
+html {
+  scroll-behavior: smooth;
+  height: auto;
+}
+
 body {
   font-family: var(--font-body);
   font-size: 13px;
   background-color: var(--bg-base);
   color: var(--text-secondary);
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  height: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -1065,8 +1072,10 @@ textarea {
 
 /* PUBLIC STYLES */
 body.public-body {
-  height: auto;
-  overflow: auto;
+  height: auto !important;
+  min-height: 100vh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   background-color: var(--bg-base);
   color: var(--text-secondary);
 }
