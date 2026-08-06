@@ -1,17 +1,17 @@
 /**
  * Cấu hình 6 Chuyên mục chính và các Lĩnh vực con tương ứng
- * dùng chung cho toàn bộ ứng dụng Đồ Sơn Today.
+ * dùng chung cho toàn bộ ứng dụng Dienbien.today.
  */
 
 export const CATEGORIES_DATA = [
   {
-    id: 'kham-pha-do-son',
-    name: 'Khám phá Đồ Sơn',
-    name_en: 'Explore Do Son',
+    id: 'kham-pha-dien-bien',
+    name: 'Khám phá Điện Biên',
+    name_en: 'Explore Dien Bien',
     subcategories: [
-      'Tổng quan Đồ Sơn',
-      'Lịch sử & Di tích',
-      'Văn hóa & Lễ hội'
+      'Tổng quan Điện Biên',
+      'Di tích Lịch sử 1954',
+      'Văn hóa & Lễ hội Hoa Ban'
     ]
   },
   {
@@ -21,7 +21,7 @@ export const CATEGORIES_DATA = [
     subcategories: [
       'Điểm đến nổi bật',
       'Nơi lưu trú & Resort',
-      'Ẩm thực & Hải sản',
+      'Ẩm thực Tây Bắc',
       'Lịch trình gợi ý'
     ]
   },
@@ -31,7 +31,7 @@ export const CATEGORIES_DATA = [
     name_en: 'Enterprises',
     subcategories: [
       'Danh bạ doanh nghiệp',
-      'Sản phẩm OCOP tiêu biểu',
+      'Sản phẩm OCOP Điện Biên',
       'Nhu cầu mua - bán'
     ]
   },
@@ -41,7 +41,7 @@ export const CATEGORIES_DATA = [
     name_en: 'Investment',
     subcategories: [
       'Dự án & Cơ hội hợp tác',
-      'Lĩnh vực tiềm năng'
+      'Khu công nghiệp & Logistics'
     ]
   },
   {
@@ -49,7 +49,7 @@ export const CATEGORIES_DATA = [
     name: 'Cộng đồng',
     name_en: 'Community',
     subcategories: [
-      'Người Đồ Sơn xa quê',
+      'Người Điện Biên xa quê',
       'Chuyên gia & Cố vấn',
       'CLB Doanh nhân'
     ]
@@ -71,7 +71,8 @@ export const CATEGORIES_DATA = [
  */
 export const CATEGORY_TRANSLATIONS = {
   // Main Categories
-  'Khám phá Đồ Sơn': { vi: 'Khám phá Đồ Sơn', en: 'Explore Do Son' },
+  'Khám phá Điện Biên': { vi: 'Khám phá Điện Biên', en: 'Explore Dien Bien' },
+  'Khám phá Đồ Sơn': { vi: 'Khám phá Điện Biên', en: 'Explore Dien Bien' },
   'Du lịch': { vi: 'Du lịch', en: 'Tourism' },
   'Doanh nghiệp': { vi: 'Doanh nghiệp', en: 'Enterprises' },
   'Đầu tư': { vi: 'Đầu tư', en: 'Investment' },
@@ -79,19 +80,19 @@ export const CATEGORY_TRANSLATIONS = {
   'Tin tức - Sự kiện': { vi: 'Tin tức - Sự kiện', en: 'News & Events' },
 
   // Sub Categories
-  'Tổng quan Đồ Sơn': { vi: 'Tổng quan Đồ Sơn', en: 'Do Son Overview' },
-  'Lịch sử & Di tích': { vi: 'Lịch sử & Di tích', en: 'History & Relics' },
-  'Văn hóa & Lễ hội': { vi: 'Văn hóa & Lễ hội', en: 'Culture & Festivals' },
+  'Tổng quan Điện Biên': { vi: 'Tổng quan Điện Biên', en: 'Dien Bien Overview' },
+  'Di tích Lịch sử 1954': { vi: 'Di tích Lịch sử 1954', en: '1954 Historic Relics' },
+  'Văn hóa & Lễ hội Hoa Ban': { vi: 'Văn hóa & Lễ hội Hoa Ban', en: 'Culture & Ban Flower Festival' },
   'Điểm đến nổi bật': { vi: 'Điểm đến nổi bật', en: 'Featured Destinations' },
   'Nơi lưu trú & Resort': { vi: 'Nơi lưu trú & Resort', en: 'Accommodations & Resorts' },
-  'Ẩm thực & Hải sản': { vi: 'Ẩm thực & Hải sản', en: 'Cuisine & Seafood' },
+  'Ẩm thực Tây Bắc': { vi: 'Ẩm thực Tây Bắc', en: 'Northwest Gastronomy' },
   'Lịch trình gợi ý': { vi: 'Lịch trình gợi ý', en: 'Suggested Itineraries' },
   'Danh bạ doanh nghiệp': { vi: 'Danh bạ doanh nghiệp', en: 'Business Directory' },
-  'Sản phẩm OCOP tiêu biểu': { vi: 'Sản phẩm OCOP tiêu biểu', en: 'Featured OCOP Products' },
+  'Sản phẩm OCOP Điện Biên': { vi: 'Sản phẩm OCOP Điện Biên', en: 'Featured OCOP Products' },
   'Nhu cầu mua - bán': { vi: 'Nhu cầu mua - bán', en: 'Trading Needs' },
   'Dự án & Cơ hội hợp tác': { vi: 'Dự án & Cơ hội hợp tác', en: 'Projects & Opportunities' },
-  'Lĩnh vực tiềm năng': { vi: 'Lĩnh vực tiềm năng', en: 'Potential Sectors' },
-  'Người Đồ Sơn xa quê': { vi: 'Người Đồ Sơn xa quê', en: 'Do Son Expatriates' },
+  'Khu công nghiệp & Logistics': { vi: 'Khu công nghiệp & Logistics', en: 'Industrial Parks & Logistics' },
+  'Người Điện Biên xa quê': { vi: 'Người Điện Biên xa quê', en: 'Dien Bien Expatriates' },
   'Chuyên gia & Cố vấn': { vi: 'Chuyên gia & Cố vấn', en: 'Experts & Advisors' },
   'CLB Doanh nhân': { vi: 'CLB Doanh nhân', en: 'Entrepreneurs Club' },
   'Tin tức thời sự': { vi: 'Tin tức thời sự', en: 'Current News' },

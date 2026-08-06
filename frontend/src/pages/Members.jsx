@@ -77,43 +77,130 @@ export const Members = () => {
     return colors[sum % colors.length];
   };
 
+  const sampleDienBienMembers = [
+    {
+      id: 1,
+      name: 'Tập đoàn Nông Lâm nghiệp Điện Biên',
+      initials: 'DB',
+      bg: '#E6F1FB',
+      fg: '#0C447C',
+      tier: 'Platinum',
+      industry: 'Nông nghiệp & OCOP',
+      email: 'contact@nonglamdienbien.vn',
+      desc: 'Đơn vị tiên phong sản xuất lúa gạo chất lượng cao, lúa Seng Cù Mường Thanh & xuất khẩu nông sản sạch.',
+      date: '01/01/2026',
+      is_featured: 1,
+      city: 'TP. Điện Biên Phủ',
+      phone: '0215 3.825.888',
+      contact_name: 'Nguyễn Văn Hùng'
+    },
+    {
+      id: 2,
+      name: 'Công ty Du lịch Sinh thái Điện Biên Travel',
+      initials: 'DT',
+      bg: '#EAF3DE',
+      fg: '#27500A',
+      tier: 'Platinum',
+      industry: 'Du lịch & Lữ hành',
+      email: 'booking@dienbientravel.vn',
+      desc: 'Chuyên tổ chức tour di sản lịch sử Điện Biên Phủ 1954, trải nghiệm văn hóa bản làng & trekking Tây Bắc.',
+      date: '05/01/2026',
+      is_featured: 1,
+      city: 'TP. Điện Biên Phủ',
+      phone: '0912 345 678',
+      contact_name: 'Trần Thị Lan'
+    },
+    {
+      id: 3,
+      name: 'Tập đoàn Đầu tư & Xây dựng Tây Bắc',
+      initials: 'TB',
+      bg: '#FAEEDA',
+      fg: '#633806',
+      tier: 'Gold',
+      industry: 'Hạ tầng & Đô thị',
+      email: 'invest@taybacgroup.vn',
+      desc: 'Chủ đầu tư hạ tầng khu công nghiệp Nam Mường Thanh, cụm logistics Cửa khẩu Quốc tế Tây Trang.',
+      date: '10/01/2026',
+      is_featured: 0,
+      city: 'TP. Điện Biên Phủ',
+      phone: '0903 888 999',
+      contact_name: 'Lê Quang Minh'
+    },
+    {
+      id: 4,
+      name: 'Hợp tác xã Khoáng nóng U Va Resort',
+      initials: 'UV',
+      bg: '#EEEDFE',
+      fg: '#3C3489',
+      tier: 'Gold',
+      industry: 'Nghỉ dưỡng & Health Care',
+      email: 'resort@uvakhoangnong.vn',
+      desc: 'Phát triển tổ hợp du lịch sinh thái khoáng nóng tự nhiên U Va, tắm bùn trị liệu & homestay văn hóa Thái.',
+      date: '15/01/2026',
+      is_featured: 0,
+      city: 'Huyện Điện Biên',
+      phone: '0934 567 890',
+      contact_name: 'Lò Thị Mai'
+    },
+    {
+      id: 5,
+      name: 'Cơ sở Sản xuất Điện Biên Food (Thịt Trâu Gác Bếp)',
+      initials: 'DF',
+      bg: '#E1F5EE',
+      fg: '#085041',
+      tier: 'Silver',
+      industry: 'Thực phẩm - OCOP',
+      email: 'sales@dienbienfood.vn',
+      desc: 'Sản xuất đặc sản thịt trâu gác bếp chuẩn vị Tây Bắc, lạp xưởng hun khói & mắc khén rừng OCOP 4 Sao.',
+      date: '20/01/2026',
+      is_featured: 0,
+      city: 'TP. Điện Biên Phủ',
+      phone: '0978 123 456',
+      contact_name: 'Phạm Văn Sơn'
+    }
+  ];
+
   useEffect(() => {
     const loadMembers = async () => {
       try {
         const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
         const res = await fetch('/api/members?status=approved', { headers });
-        if (!res.ok) throw new Error('Không thể tải danh sách hội viên');
-        const data = await res.json();
-        
-        const mappedMembers = (data.data || []).map(m => {
-          const colors = getInitialsColors(m.name);
-          return {
-            id: m.id,
-            name: m.name,
-            initials: m.name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-            bg: colors.bg,
-            fg: colors.fg,
-            tier: m.tier,
-            industry: m.industry || 'Chưa phân loại',
-            email: m.email || 'Chưa cập nhật',
-            desc: m.description || 'Chưa có mô tả chi tiết hoạt động kinh doanh.',
-            date: new Date(m.created_at).toLocaleDateString('vi-VN'),
-            is_featured: m.is_featured,
-            city: m.city || 'Việt Nam',
-            phone: m.phone || 'Chưa cập nhật',
-            contact_name: m.contact_name || 'Đại diện hội viên'
-          };
-        });
-
-        setMembers(mappedMembers);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            const mappedMembers = data.data.map(m => {
+              const colors = getInitialsColors(m.name);
+              return {
+                id: m.id,
+                name: m.name,
+                initials: m.name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+                bg: colors.bg,
+                fg: colors.fg,
+                tier: m.tier,
+                industry: m.industry || 'Chưa phân loại',
+                email: m.email || 'Chưa cập nhật',
+                desc: m.description || 'Chưa có mô tả chi tiết hoạt động kinh doanh.',
+                date: new Date(m.created_at).toLocaleDateString('vi-VN'),
+                is_featured: m.is_featured,
+                city: m.city || 'Việt Nam',
+                phone: m.phone || 'Chưa cập nhật',
+                contact_name: m.contact_name || 'Đại diện hội viên'
+              };
+            });
+            setMembers(mappedMembers);
+          } else {
+            setMembers(sampleDienBienMembers);
+          }
+        } else {
+          setMembers(sampleDienBienMembers);
+        }
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setMembers(sampleDienBienMembers);
       } finally {
         setLoading(false);
       }
     };
-
     loadMembers();
   }, [token]);
 

@@ -411,11 +411,11 @@ db.query(`
       console.log('🌱 Đang khởi tạo dữ liệu Chuyên mục & Lĩnh vực mặc định...');
       const defaultCategories = [
         {
-          name: 'Khám phá Đồ Sơn', name_en: 'Explore Do Son', order: 1,
+          name: 'Khám phá Điện Biên', name_en: 'Explore Dien Bien', order: 1,
           subs: [
-            { vi: 'Tổng quan Đồ Sơn', en: 'Do Son Overview' },
-            { vi: 'Lịch sử & Di tích', en: 'History & Relics' },
-            { vi: 'Văn hóa & Lễ hội', en: 'Culture & Festivals' }
+            { vi: 'Tổng quan Điện Biên', en: 'Dien Bien Overview' },
+            { vi: 'Di tích Lịch sử 1954', en: '1954 Historic Relics' },
+            { vi: 'Văn hóa & Lễ hội Hoa Ban', en: 'Culture & Ban Flower Festival' }
           ]
         },
         {
@@ -423,7 +423,7 @@ db.query(`
           subs: [
             { vi: 'Điểm đến nổi bật', en: 'Featured Destinations' },
             { vi: 'Nơi lưu trú & Resort', en: 'Accommodations & Resorts' },
-            { vi: 'Ẩm thực & Hải sản', en: 'Cuisine & Seafood' },
+            { vi: 'Ẩm thực Tây Bắc', en: 'Northwest Gastronomy' },
             { vi: 'Lịch trình gợi ý', en: 'Suggested Itineraries' }
           ]
         },
@@ -431,7 +431,7 @@ db.query(`
           name: 'Doanh nghiệp', name_en: 'Enterprises', order: 3,
           subs: [
             { vi: 'Danh bạ doanh nghiệp', en: 'Business Directory' },
-            { vi: 'Sản phẩm OCOP tiêu biểu', en: 'Featured OCOP Products' },
+            { vi: 'Sản phẩm OCOP Điện Biên', en: 'Featured OCOP Products' },
             { vi: 'Nhu cầu mua - bán', en: 'Trading Needs' }
           ]
         },
@@ -439,13 +439,13 @@ db.query(`
           name: 'Đầu tư', name_en: 'Investment', order: 4,
           subs: [
             { vi: 'Dự án & Cơ hội hợp tác', en: 'Projects & Opportunities' },
-            { vi: 'Lĩnh vực tiềm năng', en: 'Potential Sectors' }
+            { vi: 'Khu công nghiệp & Logistics', en: 'Industrial Parks & Logistics' }
           ]
         },
         {
           name: 'Cộng đồng', name_en: 'Community', order: 5,
           subs: [
-            { vi: 'Người Đồ Sơn xa quê', en: 'Do Son Expatriates' },
+            { vi: 'Người Điện Biên xa quê', en: 'Dien Bien Expatriates' },
             { vi: 'Chuyên gia & Cố vấn', en: 'Experts & Advisors' },
             { vi: 'CLB Doanh nhân', en: 'Entrepreneurs Club' }
           ]
@@ -1713,14 +1713,14 @@ app.get('/api/posts', async (req, res) => {
     // Tự động chuyển trạng thái bài viết quá hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
     try {
       await db.query(
-        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline != '' AND deadline != '0000-00-00' AND status = 'approved' AND deadline < ?",
+        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline >= '1970-01-01' AND status = 'approved' AND deadline < ?",
         [todayStr]
       );
     } catch (e) {
       console.warn('Cảnh báo tự động ẩn bài viết quá hạn:', e.message);
     }
 
-    let sql = `SELECT p.*, COALESCE(c.name, m.name, 'Ban Biên tập Đồ Sơn Today') AS company_name, COALESCE(m.tier, 'Standard') AS company_tier
+    let sql = `SELECT p.*, COALESCE(c.name, m.name, 'Ban Biên tập Dienbien.today') AS company_name, COALESCE(m.tier, 'Standard') AS company_tier
                FROM posts p 
                LEFT JOIN members m ON p.member_id = m.id 
                LEFT JOIN content_creators c ON p.creator_id = c.id
@@ -1735,7 +1735,7 @@ app.get('/api/posts', async (req, res) => {
       } else {
         sql += " AND p.status = 'approved'";
       }
-      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR p.deadline = '0000-00-00' OR p.deadline >= ?)";
+      sql += " AND (p.deadline IS NULL OR p.deadline >= ?)";
       params.push(todayStr);
     } else {
       // Dành cho Admin / Member / Creator đã đăng nhập

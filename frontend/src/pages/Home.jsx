@@ -755,7 +755,7 @@ export const Home = () => {
           <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '6px' }}>Cộng Đồng Hội Viên</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
           {communityMembers.map((mem, idx) => (
             <div key={idx} style={{ backgroundColor: 'var(--surface-2)', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.5rem', textAlign: 'center' }}>
               <div style={{ fontSize: '3rem', marginBottom: '10px' }}>{mem.avatar}</div>
@@ -764,6 +764,28 @@ export const Home = () => {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{mem.desc}</p>
             </div>
           ))}
+        </div>
+
+        <div style={{ textAlign: 'center' }}>
+          <button
+            onClick={() => navigate('/members')}
+            style={{
+              backgroundColor: '#0B5FFF',
+              color: '#ffffff',
+              border: 'none',
+              padding: '12px 28px',
+              borderRadius: '16px',
+              fontWeight: '700',
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(11, 95, 255, 0.3)',
+              transition: 'transform 0.2s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            Xem toàn bộ Danh bạ Doanh nghiệp & Hội viên ➔
+          </button>
         </div>
       </section>
 

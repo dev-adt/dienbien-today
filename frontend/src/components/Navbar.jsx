@@ -38,28 +38,29 @@ export const Navbar = () => {
 
   const navLinks = [
     { label: 'Trang chủ', path: '/', anchor: '#hero' },
-    { label: 'Khám phá', path: '/', anchor: '#kham-pha' },
-    { label: 'Du lịch', path: '/', anchor: '#diem-den' },
-    { label: 'Đầu tư', path: '/', anchor: '#dau-tu' },
-    { label: 'Doanh nghiệp', path: '/', anchor: '#doanh-nghiep' },
-    { label: 'Sản phẩm OCOP', path: '/', anchor: '#ocop' },
-    { label: 'Văn hóa', path: '/', anchor: '#van-hoa' },
-    { label: 'Tin tức', path: '/', anchor: '#tin-tuc' },
-    { label: 'AI Assistant', path: '/', anchor: '#ai-assistant' },
-    { label: 'Thành viên', path: '/', anchor: '#thanh-vien' },
+    { label: 'Khám phá', path: '/posts?category=Khám phá Điện Biên', anchor: '#kham-pha' },
+    { label: 'Du lịch', path: '/posts?category=Du lịch', anchor: '#diem-den' },
+    { label: 'Đầu tư', path: '/posts?category=Đầu tư', anchor: '#dau-tu' },
+    { label: 'Doanh nghiệp', path: '/posts?category=Doanh nghiệp', anchor: '#doanh-nghiep' },
+    { label: 'Sản phẩm OCOP', path: '/posts?sub_category=Sản phẩm OCOP Điện Biên', anchor: '#ocop' },
+    { label: 'Văn hóa', path: '/posts?sub_category=Văn hóa %26 Lễ hội Hoa Ban', anchor: '#van-hoa' },
+    { label: 'Tin tức', path: '/posts?category=Tin tức - Sự kiện', anchor: '#tin-tuc' },
+    { label: 'AI Assistant', path: '/ai-chat', anchor: '#ai-assistant' },
+    { label: 'Thành viên', path: '/members', anchor: '#thanh-vien' },
     { label: 'Liên hệ', path: '/', anchor: '#footer' },
   ];
 
   const handleNavClick = (e, link) => {
-    if (link.anchor && location.pathname === '/') {
+    if (link.anchor && location.pathname === '/' && link.path === '/') {
       e.preventDefault();
       const targetEl = document.querySelector(link.anchor);
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         setMobileMenuOpen(false);
       }
-    } else if (link.path !== location.pathname) {
+    } else {
       setMobileMenuOpen(false);
+      navigate(link.path);
     }
   };
 
