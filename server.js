@@ -204,6 +204,13 @@ db.query(`
       console.log('✅ Đã nâng cấp bảng members (thêm cột username, password_hash)');
     }
     
+    // Đảm bảo cột email cho phép NULL nếu hội viên đăng ký bằng số điện thoại
+    try {
+      await db.query("ALTER TABLE members MODIFY COLUMN email VARCHAR(255) NULL DEFAULT NULL");
+    } catch (e) {
+      // Ignored if already nullable
+    }
+    
     await db.query(`
       CREATE TABLE IF NOT EXISTS member_sessions (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -772,8 +779,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // 3. Thử tìm trong bảng members nếu không khớp
-    const [memberRows] = await db.query('SELECT * FROM members WHERE username = ? OR email = ?', [username, username]);
+    // 3. Thử tìm trong bảng members nếu không khớp (Hỗ trợ Đăng nhập bằng Username, Email hoặc SĐT)
+    const [memberRows] = await db.query('SELECT * FROM members WHERE username = ? OR email = ? OR phone = ?', [username, username, username]);
     if (memberRows.length > 0) {
       const member = memberRows[0];
       if (!member.password_hash) {
@@ -887,7 +894,7 @@ app.post('/api/member/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Vui lòng cung cấp tài khoản và mật khẩu.' });
     }
 
-    const [rows] = await db.query('SELECT * FROM members WHERE username = ? OR email = ?', [username, username]);
+    const [rows] = await db.query('SELECT * FROM members WHERE username = ? OR email = ? OR phone = ?', [username, username, username]);
     if (!rows.length) {
       return res.status(401).json({ success: false, error: 'Tài khoản hoặc mật khẩu không chính xác.' });
     }
@@ -945,15 +952,18 @@ app.post('/api/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp email tài khoản.' });
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp email hoặc tài khoản đăng nhập.' });
     }
 
-    const [rows] = await db.query('SELECT id, name FROM members WHERE email = ?', [email]);
+    const [rows] = await db.query('SELECT id, name, email FROM members WHERE email = ? OR username = ? OR phone = ?', [email, email, email]);
     if (!rows.length) {
-      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản hội viên nào được đăng ký với email này.' });
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản hội viên nào phù hợp.' });
     }
 
     const member = rows[0];
+    if (!member.email) {
+      return res.status(400).json({ success: false, error: 'Tài khoản này chưa đăng ký email để nhận mật khẩu khôi phục. Vui lòng liên hệ Admin.' });
+    }
 
     // Tạo mật khẩu ngẫu nhiên 10 ký tự chữ và số
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1394,7 +1404,7 @@ app.get('/api/members/:id', async (req, res) => {
 
     if (!isAuthenticated) {
       // Ẩn thông tin liên hệ nhạy cảm của hội viên đối với khách vãng lai
-      m.email = '***@***.***';
+      m.email = m.email ? '***@***.***' : null;
       m.phone = '09** *** ***';
       m.contact_name = '***';
       m.contact_pos = '***';
@@ -1414,10 +1424,25 @@ app.post('/api/members', async (req, res) => {
       description, tier, contact_name, contact_pos, email, phone, goal, referral, password
     } = req.body;
 
-    if (!name || !email) return res.status(400).json({ success: false, error: 'Thiếu tên hoặc email.' });
+    const cleanEmail = (email && email.trim()) ? email.trim() : null;
+    const cleanPhone = (phone && phone.trim()) ? phone.trim() : null;
+    const loginCredential = cleanEmail || cleanPhone;
 
-    const [existing] = await db.query('SELECT id FROM members WHERE email = ?', [email]);
-    if (existing.length) return res.status(409).json({ success: false, error: 'Email này đã được đăng ký.' });
+    if (!name || !loginCredential) {
+      return res.status(400).json({ success: false, error: 'Thiếu tên doanh nghiệp hoặc tài khoản đăng nhập (Email / SĐT).' });
+    }
+
+    // Kiểm tra trùng lặp Email nếu có nhập email
+    if (cleanEmail) {
+      const [existingEmail] = await db.query('SELECT id FROM members WHERE email = ? OR username = ?', [cleanEmail, cleanEmail]);
+      if (existingEmail.length) return res.status(409).json({ success: false, error: 'Email này đã được đăng ký cho tài khoản khác.' });
+    }
+
+    // Kiểm tra trùng lặp Tên đăng nhập (Username / Phone)
+    if (loginCredential) {
+      const [existingUser] = await db.query('SELECT id FROM members WHERE username = ? OR (phone = ? AND phone IS NOT NULL AND phone != "")', [loginCredential, loginCredential]);
+      if (existingUser.length) return res.status(409).json({ success: false, error: 'Tài khoản đăng nhập hoặc Số điện thoại này đã được đăng ký.' });
+    }
 
     let hash = null;
     if (password && password.trim() !== '') {
@@ -1429,14 +1454,14 @@ app.post('/api/members', async (req, res) => {
         description, tier, status, contact_name, contact_pos, email, username, password_hash, phone, goal, referral)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,'pending',?,?,?,?,?,?,?,?)`,
       [name, tax_code, license, industry, size, address, city || null, website, social,
-       description, tier || 'Silver', contact_name, contact_pos, email, email, hash, phone, goal, referral]
+       description, tier || 'Silver', contact_name, contact_pos, cleanEmail, loginCredential, hash, cleanPhone, goal, referral]
     );
 
-    // Gửi email thông báo đăng ký
-    if (transporter) {
+    // Gửi email thông báo đăng ký (nếu có nhập email)
+    if (transporter && cleanEmail) {
       const mailOptions = {
         from: process.env.SMTP_FROM || `"Đồ Sơn" <${process.env.SMTP_USER}>`,
-        to: email,
+        to: cleanEmail,
         bcc: process.env.SMTP_BCC || undefined,
         subject: '[Đồ Sơn] Đăng ký tài khoản thành công',
         html: `
@@ -1452,8 +1477,8 @@ app.post('/api/members', async (req, res) => {
                   <td style="padding: 4px 0; color: #333;">${name}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; color: #666;"><strong>Email đăng nhập:</strong></td>
-                  <td style="padding: 4px 0; color: #333;">${email}</td>
+                  <td style="padding: 4px 0; color: #666;"><strong>Tài khoản đăng nhập:</strong></td>
+                  <td style="padding: 4px 0; color: #333;">${loginCredential}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; color: #666;"><strong>Gói hội viên:</strong></td>

@@ -68,8 +68,11 @@ export const Register = () => {
   const validateStep2 = () => {
     if (!formData.contact_name) return t('err_fill_rep_name');
     if (!formData.contact_pos) return t('err_fill_rep_position');
-    if (!formData.email) return t('err_fill_email');
-    if (!formData.phone) return t('err_fill_phone');
+    if (!formData.email && !formData.phone) {
+      return t('currentLang') === 'vi' 
+        ? 'Vui lòng nhập Email hoặc Số điện thoại để làm tài khoản đăng nhập.' 
+        : 'Please enter at least an Email or Phone number for your login account.';
+    }
     return null;
   };
 
@@ -354,8 +357,8 @@ export const Register = () => {
                     </div>
 
                     <div className="fg" style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_short_description')} <span style={{ color: 'var(--rose)' }}>*</span></label>
-                      <textarea id="r-description" value={formData.description} onChange={handleInputChange} placeholder="Giới thiệu sơ lược sản phẩm, dịch vụ..." style={{ width: '100%', height: '100px', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', resize: 'vertical' }}></textarea>
+                      <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_description')} <span style={{ color: 'var(--rose)' }}>*</span></label>
+                      <textarea id="r-description" rows="3" value={formData.description} onChange={handleInputChange} placeholder={t('placeholder_description')} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', resize: 'vertical' }}></textarea>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -380,14 +383,30 @@ export const Register = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                      <div className="fg">
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_login_email')} <span style={{ color: 'var(--rose)' }}>*</span></label>
-                        <input type="email" id="r-email" value={formData.email} onChange={handleInputChange} placeholder={t('placeholder_rep_email')} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }} />
+                    {/* Khung nhập Tài khoản đăng nhập (Email hoặc SĐT) */}
+                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px', marginBottom: '1.25rem' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0F172A', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="ti ti-key" style={{ color: 'var(--primary)' }}></i>
+                        Tài khoản đăng nhập (Nhập Email hoặc Số điện thoại) <span style={{ color: 'var(--rose)' }}>*</span>
                       </div>
-                      <div className="fg">
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_phone_number')} <span style={{ color: 'var(--rose)' }}>*</span></label>
-                        <input type="tel" id="r-phone" value={formData.phone} onChange={handleInputChange} placeholder={t('placeholder_rep_phone')} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none' }} />
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                        <div className="fg">
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                            Số điện thoại
+                          </label>
+                          <input type="tel" id="r-phone" value={formData.phone} onChange={handleInputChange} placeholder="Nhập số điện thoại di động..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }} />
+                        </div>
+                        <div className="fg">
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                            Email đăng nhập (Không bắt buộc)
+                          </label>
+                          <input type="email" id="r-email" value={formData.email} onChange={handleInputChange} placeholder="email@company.vn (Tùy chọn)..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }} />
+                        </div>
+                      </div>
+                      
+                      <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '8px' }}>
+                        💡 Bạn có thể điền Số điện thoại hoặc Email (hoặc cả hai). Hệ thống sẽ dùng thông tin này làm tài khoản đăng nhập.
                       </div>
                     </div>
 
@@ -421,9 +440,13 @@ export const Register = () => {
                     <div style={{ fontWeight: 700, fontSize: '15px', color: '#1E293B', marginBottom: '1.25rem' }}><i className="ti ti-lock" style={{ color: 'var(--primary)' }}></i> {t('step_3_title')}</div>
 
                     <div className="fg" style={{ marginBottom: '1.25rem' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>{t('label_login_email')} <span style={{ color: 'var(--rose)' }}>*</span></label>
-                      <input type="text" value={formData.email} disabled style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', backgroundColor: '#F1F5F9', color: '#64748B' }} />
-                      <div style={{ fontSize: '11px', color: 'var(--text-light-muted)', marginTop: '4px' }}>{t('login_email_help_text')}</div>
+                      <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                        Tài khoản đăng nhập (Username) <span style={{ color: 'var(--rose)' }}>*</span>
+                      </label>
+                      <input type="text" value={formData.phone || formData.email || ''} disabled style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', backgroundColor: '#F1F5F9', color: '#0F172A', fontWeight: 600 }} />
+                      <div style={{ fontSize: '11px', color: 'var(--text-light-muted)', marginTop: '4px' }}>
+                        💡 Bạn sẽ sử dụng <strong>{formData.phone || formData.email}</strong> và mật khẩu bên dưới để đăng nhập vào hệ thống.
+                      </div>
                     </div>
 
                     <div className="fg" style={{ marginBottom: '1.25rem' }}>

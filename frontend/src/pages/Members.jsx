@@ -129,10 +129,11 @@ export const Members = () => {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matchSearch = 
-          m.name.toLowerCase().includes(q) || 
-          m.industry.toLowerCase().includes(q) || 
-          m.city.toLowerCase().includes(q) || 
-          m.email.toLowerCase().includes(q);
+          (m.name && m.name.toLowerCase().includes(q)) || 
+          (m.industry && m.industry.toLowerCase().includes(q)) || 
+          (m.city && m.city.toLowerCase().includes(q)) || 
+          (m.email && m.email.toLowerCase().includes(q)) ||
+          (m.phone && m.phone.toLowerCase().includes(q));
         if (!matchSearch) return false;
       }
       if (selectedTier && m.tier !== selectedTier) return false;
