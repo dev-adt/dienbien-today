@@ -254,27 +254,6 @@ export const Navbar = () => {
 
         {/* Right Utilities */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Dark Mode Switcher */}
-          <button
-            onClick={toggleDarkMode}
-            title={isDarkMode ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Dark Mode"}
-            style={{
-              background: 'var(--surface-0)',
-              border: '1px solid var(--border)',
-              borderRadius: '50%',
-              width: '36px',
-              height: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-primary)',
-              transition: 'var(--transition)'
-            }}
-          >
-            <i className={isDarkMode ? "ti ti-sun" : "ti ti-moon"} style={{ fontSize: '1.2rem', color: isDarkMode ? '#F6B800' : '#0B5FFF' }}></i>
-          </button>
-
           {/* Multi-Language Dropdown (9 languages) */}
           <div style={{ position: 'relative' }}>
             <button
@@ -347,7 +326,7 @@ export const Navbar = () => {
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Link
-                to={role === 'admin' ? '/admin' : role === 'creator' ? '/creator' : '/member'}
+                to={role === 'admin' ? '/admin-dashboard' : role === 'creator' ? '/creator-dashboard' : '/member-dashboard'}
                 style={{
                   background: '#0B5FFF',
                   color: '#ffffff',
@@ -364,6 +343,29 @@ export const Navbar = () => {
                 <span>{getInitials(user.name)}</span>
                 <span>{user.name}</span>
               </Link>
+
+              <button
+                onClick={logout}
+                title="Đăng xuất"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#EF4444',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+              >
+                <i className="ti ti-logout" style={{ fontSize: '0.9rem' }}></i>
+                <span>Đăng xuất</span>
+              </button>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

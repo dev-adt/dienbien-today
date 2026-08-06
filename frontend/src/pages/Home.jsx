@@ -198,6 +198,38 @@ export const Home = () => {
     { name: 'Hợp tác社 Khoáng nóng U Va Resort', field: 'Nghỉ dưỡng & Health Care', logo: '♨️', aiDesc: 'Phát triển tổ hợp du lịch khoáng nóng tự nhiên và chăm sóc sức khỏe.' }
   ];
 
+  // AI Applications Block Cards
+  const aiAppCards = [
+    {
+      title: 'AI cho người dân',
+      icon: '🤖',
+      badge: 'CÔNG DÂN SỐ',
+      desc: 'Trợ lý AI đa ngôn ngữ hỗ trợ người dân & du khách tra cứu di sản, thông tin du lịch, dịch vụ hành chính công và tiện ích đời sống 24/7.',
+      isNvidia: false
+    },
+    {
+      title: 'AI cho chính quyền',
+      icon: '🏛️',
+      badge: 'CHÍNH QUYỀN SỐ',
+      desc: 'Giải pháp AI phân tích dữ liệu kinh tế - xã hội, tự động hóa báo cáo, hỗ trợ điều hành đô thị thông minh và ra quyết định chiến lược.',
+      isNvidia: false
+    },
+    {
+      title: 'AI cho doanh nghiệp',
+      icon: '🏢',
+      badge: 'DOANH NGHIỆP SỐ',
+      desc: 'Bộ giải pháp Trí tuệ Nhân tạo giúp doanh nghiệp tự động hóa CSKH, tư vấn thương mại, tiếp thị đa kênh và tối ưu hóa vận hành.',
+      isNvidia: false
+    },
+    {
+      title: 'Chương trình đào tạo NVIDIA Deep Learning Institute',
+      icon: '🎓',
+      badge: 'NVIDIA DLI',
+      desc: 'Chương trình đào tạo chuẩn quốc tế hợp tác cùng NVIDIA DLI nhằm phát triển nguồn nhân lực chất lượng cao về AI & Điện toán hiệu năng cao tại Điện Biên.',
+      isNvidia: true
+    }
+  ];
+
   // Default Featured Posts for Home
   const defaultFeaturedPosts = [
     {
@@ -523,6 +555,69 @@ export const Home = () => {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SECTION: ỨNG DỤNG AI & DEEP LEARNING (Vị trí giữa Khám Phá Điện Biên & Điểm Đến Nổi Bật) */}
+      <section id="ung-dung-ai" style={{ padding: '5rem 1.5rem', backgroundColor: 'var(--surface-1)' }}>
+        <div style={{ maxWidth: '1360px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(11, 95, 255, 0.12)', border: '1px solid rgba(11, 95, 255, 0.3)', padding: '6px 18px', borderRadius: '30px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: '800', letterSpacing: '0.08em', color: '#0B5FFF' }}>AI APPLICATIONS & DEEP LEARNING</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '4px' }}>Ứng Dụng AI</h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '650px', margin: '8px auto 0 auto' }}>
+              Hệ sinh thái Trí tuệ Nhân tạo toàn diện hỗ trợ Chuyển đổi số, nâng cao chất lượng cuộc sống & thúc đẩy Kinh tế - Xã hội tỉnh Điện Biên.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem' }}>
+            {aiAppCards.map((card, idx) => (
+              <div
+                key={idx}
+                onClick={() => navigate(`/posts?category=${encodeURIComponent('Ứng dụng AI')}&sub_category=${encodeURIComponent(card.title)}`)}
+                style={{
+                  backgroundColor: 'var(--surface-2)',
+                  borderRadius: '24px',
+                  border: card.isNvidia ? '2px solid #76B900' : '1px solid var(--border)',
+                  padding: '2rem 1.75rem',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  boxShadow: 'var(--shadow)',
+                  transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  overflow: 'hidden'
+                }}
+                className="hover-zoom-card"
+              >
+                {card.badge && (
+                  <span style={{ position: 'absolute', top: '16px', right: '16px', backgroundColor: card.isNvidia ? '#76B900' : '#0B5FFF', color: '#ffffff', fontSize: '0.7rem', fontWeight: '800', padding: '4px 10px', borderRadius: '12px', letterSpacing: '0.05em' }}>
+                    {card.badge}
+                  </span>
+                )}
+
+                <div>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>
+                    {card.icon}
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '12px', lineHeight: '1.35', color: card.isNvidia ? '#76B900' : 'var(--text-primary)' }}>
+                    {card.title}
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
+                    {card.desc}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: card.isNvidia ? '#76B900' : '#0B5FFF' }}>
+                    Đọc chi tiết bài viết ➔
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
