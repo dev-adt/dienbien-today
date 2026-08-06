@@ -325,21 +325,27 @@ export const Navbar = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Link
                 to={role === 'admin' ? '/admin-dashboard' : role === 'creator' ? '/creator-dashboard' : '/member-dashboard'}
+                title={`Bảng điều khiển: ${user.name}`}
                 style={{
-                  background: '#0B5FFF',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  backgroundColor: '#0B5FFF',
                   color: '#ffffff',
-                  padding: '6px 14px',
-                  borderRadius: '20px',
                   textDecoration: 'none',
                   fontSize: '0.85rem',
-                  fontWeight: '600',
+                  fontWeight: '800',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(11, 95, 255, 0.3)',
+                  transition: 'transform 0.2s ease',
+                  flexShrink: 0
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
-                <span>{getInitials(user.name)}</span>
-                <span>{user.name}</span>
+                {getInitials(user.name)}
               </Link>
 
               <button
