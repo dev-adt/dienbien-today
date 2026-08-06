@@ -349,6 +349,14 @@ db.query(`
     await db.query("ALTER TABLE members MODIFY COLUMN status ENUM('pending','approved','rejected','suspended') DEFAULT 'pending'");
     console.log("✅ Cập nhật ENUM cột status bảng members thành công");
 
+    // Cập nhật ENUM cho status cột của bảng posts để hỗ trợ 'hidden' (Ẩn bài / bài quá hạn)
+    try {
+      await db.query("ALTER TABLE posts MODIFY COLUMN status ENUM('draft','pending','approved','rejected','hidden') DEFAULT 'pending'");
+      console.log("✅ Cập nhật ENUM cột status bảng posts thành công");
+    } catch (e) {
+      console.warn("⚠️ Cảnh báo cập nhật status bảng posts:", e.message);
+    }
+
     // Thêm cột system_instruction vào bảng ai_config
     const [aiCols] = await db.query("SHOW COLUMNS FROM ai_config LIKE 'system_instruction'");
     if (!aiCols.length) {
@@ -1421,12 +1429,19 @@ app.post('/api/members', async (req, res) => {
   try {
     const {
       name, tax_code, license, industry, size, address, city, website, social,
-      description, tier, contact_name, contact_pos, email, phone, goal, referral, password
+      description, tier, contact_name, contact_pos, email, phone, preferred_login, goal, referral, password
     } = req.body;
 
     const cleanEmail = (email && email.trim()) ? email.trim() : null;
     const cleanPhone = (phone && phone.trim()) ? phone.trim() : null;
-    const loginCredential = cleanEmail || cleanPhone;
+    
+    // Mặc định ưu tiên Email làm tài khoản đăng nhập nếu có nhập Email, trừ khi người dùng chọn Phone
+    let loginCredential = cleanEmail || cleanPhone;
+    if (preferred_login === 'phone' && cleanPhone) {
+      loginCredential = cleanPhone;
+    } else if (cleanEmail) {
+      loginCredential = cleanEmail;
+    }
 
     if (!name || !loginCredential) {
       return res.status(400).json({ success: false, error: 'Thiếu tên doanh nghiệp hoặc tài khoản đăng nhập (Email / SĐT).' });
@@ -1698,7 +1713,7 @@ app.get('/api/posts', async (req, res) => {
     // Tự động chuyển trạng thái bài viết quá hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
     try {
       await db.query(
-        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline != '' AND status = 'approved' AND deadline < ?",
+        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline != '' AND deadline != '0000-00-00' AND status = 'approved' AND deadline < ?",
         [todayStr]
       );
     } catch (e) {
@@ -1720,7 +1735,7 @@ app.get('/api/posts', async (req, res) => {
       } else {
         sql += " AND p.status = 'approved'";
       }
-      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR p.deadline >= ?)";
+      sql += " AND (p.deadline IS NULL OR p.deadline = '' OR p.deadline = '0000-00-00' OR p.deadline >= ?)";
       params.push(todayStr);
     } else {
       // Dành cho Admin / Member / Creator đã đăng nhập

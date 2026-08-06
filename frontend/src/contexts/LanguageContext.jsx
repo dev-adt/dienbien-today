@@ -373,6 +373,7 @@ const LANGS = {
     placeholder_zip: 'Ví dụ: 100000',
     placeholder_social: 'facebook.com/company',
     placeholder_short_description: 'Giới thiệu sơ lược sản phẩm, dịch vụ...',
+    label_description: 'Giới thiệu ngắn gọn về Doanh nghiệp',
     btn_continue: 'Tiếp tục',
     btn_back: 'Quay lại',
     placeholder_rep_name: 'Họ và tên người liên hệ',

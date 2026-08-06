@@ -25,6 +25,7 @@ export const Register = () => {
     contact_pos: '',
     email: '',
     phone: '',
+    preferred_login: 'email',
     goal: '',
     referral: '',
     password: '',
@@ -36,6 +37,13 @@ export const Register = () => {
   const [success, setSuccess] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const getPrimaryUsername = () => {
+    if (formData.preferred_login === 'phone' && formData.phone) {
+      return formData.phone;
+    }
+    return formData.email || formData.phone || '';
+  };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -393,20 +401,49 @@ export const Register = () => {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                         <div className="fg">
                           <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                            Email đăng nhập (Mặc định ưu tiên)
+                          </label>
+                          <input type="email" id="r-email" value={formData.email} onChange={handleInputChange} placeholder="email@company.vn (Tùy chọn)..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }} />
+                        </div>
+                        <div className="fg">
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
                             Số điện thoại
                           </label>
                           <input type="tel" id="r-phone" value={formData.phone} onChange={handleInputChange} placeholder="Nhập số điện thoại di động..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }} />
                         </div>
-                        <div className="fg">
-                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
-                            Email đăng nhập (Không bắt buộc)
-                          </label>
-                          <input type="email" id="r-email" value={formData.email} onChange={handleInputChange} placeholder="email@company.vn (Tùy chọn)..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }} />
-                        </div>
                       </div>
+
+                      {/* Bộ chọn tài khoản đăng nhập chính nếu người dùng nhập cả 2 */}
+                      {formData.email && formData.phone && (
+                        <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                            Chọn tài khoản làm Username đăng nhập chính:
+                          </span>
+                          <div style={{ display: 'flex', gap: '16px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: formData.preferred_login !== 'phone' ? 'var(--primary)' : '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <input 
+                                type="radio" 
+                                name="pref_login" 
+                                checked={formData.preferred_login !== 'phone'} 
+                                onChange={() => setFormData(prev => ({ ...prev, preferred_login: 'email' }))} 
+                              />
+                              Email ({formData.email}) ★ Ưu tiên
+                            </label>
+                            <label style={{ fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: formData.preferred_login === 'phone' ? 'var(--primary)' : '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <input 
+                                type="radio" 
+                                name="pref_login" 
+                                checked={formData.preferred_login === 'phone'} 
+                                onChange={() => setFormData(prev => ({ ...prev, preferred_login: 'phone' }))} 
+                              />
+                              Số điện thoại ({formData.phone})
+                            </label>
+                          </div>
+                        </div>
+                      )}
                       
                       <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '8px' }}>
-                        💡 Bạn có thể điền Số điện thoại hoặc Email (hoặc cả hai). Hệ thống sẽ dùng thông tin này làm tài khoản đăng nhập.
+                        💡 Hệ thống mặc định ưu tiên Email làm tài khoản đăng nhập chính. Nếu nhập cả Email và SĐT, bạn có thể tự chọn 1 trong 2 làm Username chính.
                       </div>
                     </div>
 
@@ -443,9 +480,50 @@ export const Register = () => {
                       <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px', display: 'block' }}>
                         Tài khoản đăng nhập (Username) <span style={{ color: 'var(--rose)' }}>*</span>
                       </label>
-                      <input type="text" value={formData.phone || formData.email || ''} disabled style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', backgroundColor: '#F1F5F9', color: '#0F172A', fontWeight: 600 }} />
+                      
+                      {formData.email && formData.phone ? (
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, preferred_login: 'email' }))}
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: formData.preferred_login !== 'phone' ? '2px solid var(--primary)' : '1px solid #CBD5E1',
+                              backgroundColor: formData.preferred_login !== 'phone' ? '#E0F2FE' : '#FFFFFF',
+                              color: formData.preferred_login !== 'phone' ? '#0369A1' : '#475569',
+                              fontWeight: 700,
+                              fontSize: '12.5px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ✉️ Email ({formData.email}) ★ Ưu tiên
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, preferred_login: 'phone' }))}
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: formData.preferred_login === 'phone' ? '2px solid var(--primary)' : '1px solid #CBD5E1',
+                              backgroundColor: formData.preferred_login === 'phone' ? '#E0F2FE' : '#FFFFFF',
+                              color: formData.preferred_login === 'phone' ? '#0369A1' : '#475569',
+                              fontWeight: 700,
+                              fontSize: '12.5px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            📞 Số điện thoại ({formData.phone})
+                          </button>
+                        </div>
+                      ) : (
+                        <input type="text" value={getPrimaryUsername()} disabled style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #D8E2EF', fontSize: '13px', backgroundColor: '#F1F5F9', color: '#0F172A', fontWeight: 600 }} />
+                      )}
+
                       <div style={{ fontSize: '11px', color: 'var(--text-light-muted)', marginTop: '4px' }}>
-                        💡 Bạn sẽ sử dụng <strong>{formData.phone || formData.email}</strong> và mật khẩu bên dưới để đăng nhập vào hệ thống.
+                        💡 Bạn sẽ sử dụng <strong>{getPrimaryUsername()}</strong> và mật khẩu bên dưới để đăng nhập vào hệ thống.
                       </div>
                     </div>
 
