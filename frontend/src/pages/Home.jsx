@@ -518,7 +518,7 @@ export const Home = () => {
         </div>
 
         {/* 8 Cards Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+        <div className="grid-4-cols">
           {khamPhaCategories.map((item) => (
             <div
               key={item.id}
@@ -571,7 +571,7 @@ export const Home = () => {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.75rem' }}>
+          <div className="grid-4-cols">
             {aiAppCards.map((card, idx) => (
               <div
                 key={idx}
@@ -612,7 +612,7 @@ export const Home = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: '700', color: card.isNvidia ? '#76B900' : '#0B5FFF' }}>
-                    Đọc chi tiết bài viết ➔
+                    Xem chi tiết ➔
                   </span>
                 </div>
               </div>
@@ -650,7 +650,7 @@ export const Home = () => {
           </div>
 
           {/* Destination Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2rem' }}>
+          <div className="grid-3-cols">
             {featuredDestinations.map((dest) => (
               <div
                 key={dest.id}
@@ -729,7 +729,7 @@ export const Home = () => {
           </div>
 
           {/* Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem', marginBottom: '4rem' }}>
+          <div className="grid-4-cols" style={{ marginBottom: '4rem' }}>
             {investmentStats.map((stat, idx) => (
               <div
                 key={idx}
@@ -785,7 +785,7 @@ export const Home = () => {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+        <div className="grid-4-cols">
           {ocopProducts.map((prod, idx) => (
             <div
               key={idx}
@@ -850,7 +850,7 @@ export const Home = () => {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          <div className="grid-4-cols">
             {enterpriseList.map((ent, idx) => (
               <div
                 key={idx}
@@ -902,7 +902,7 @@ export const Home = () => {
         </div>
 
         {/* Culture Gallery Showcase */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div className="grid-3-cols">
           <div style={{ background: 'var(--surface-2)', borderRadius: '24px', padding: '1.5rem', border: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '8px' }}>🌸 Lễ Hội Hoa Ban</h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
@@ -932,7 +932,7 @@ export const Home = () => {
             <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '6px' }}>Tin Tức & Truyền Thông AI</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
+          <div className="grid-3-cols" style={{ marginBottom: '3rem' }}>
             {homePosts.map((post, pIdx) => (
               <div 
                 key={pIdx} 
@@ -998,7 +998,7 @@ export const Home = () => {
           <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: '800', marginTop: '6px' }}>Cộng Đồng Hội Viên</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        <div className="grid-4-cols" style={{ marginBottom: '2.5rem' }}>
           {homeMembers.map((mem, idx) => (
             <div key={idx} style={{ backgroundColor: 'var(--surface-2)', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow)' }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: mem.bg, color: mem.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: '800', margin: '0 auto 12px auto', border: '2px solid var(--border)' }}>

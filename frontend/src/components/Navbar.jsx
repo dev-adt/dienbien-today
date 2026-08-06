@@ -58,7 +58,6 @@ export const Navbar = () => {
 
   // Dynamic Navigation Links generated directly from Admin categories API
   const dynamicNavLinks = [
-    { label: 'Trang chủ', path: '/', catObj: null },
     ...categories
       .filter(c => c.status !== 'inactive')
       .map(c => ({
@@ -66,8 +65,7 @@ export const Navbar = () => {
         path: `/posts?category=${encodeURIComponent(c.name)}`,
         catObj: c
       })),
-    { label: 'AI Assistant', path: '/ai-chat', catObj: null },
-    { label: 'Thành viên', path: '/members', catObj: null },
+    { label: 'Trợ lý AI', path: '/ai-chat', catObj: null },
   ];
 
   const getSubcategories = (catObj) => {
@@ -426,26 +424,56 @@ export const Navbar = () => {
             padding: '1rem 1.5rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px'
+            gap: '8px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
           }}
         >
-          {navLinks.map((link, idx) => (
-            <a
-              key={idx}
-              href={link.path + link.anchor}
-              onClick={(e) => handleNavClick(e, link)}
-              style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                padding: '8px 0',
-                borderBottom: '1px solid var(--border)'
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
+          {dynamicNavLinks.map((link, idx) => {
+            const subs = getSubcategories(link.catObj);
+            const hasSubs = subs.length > 0;
+            return (
+              <div key={idx} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <a
+                  href={link.path}
+                  onClick={(e) => handleNavClick(e, link)}
+                  style={{
+                    color: 'var(--text-primary)',
+                    textDecoration: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    padding: '6px 0',
+                    display: 'block'
+                  }}
+                >
+                  {link.label}
+                </a>
+
+                {hasSubs && (
+                  <div style={{ paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                    {subs.map((sub, sIdx) => (
+                      <div
+                        key={sIdx}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(`/posts?category=${encodeURIComponent(link.label)}&sub_category=${encodeURIComponent(sub)}`);
+                        }}
+                        style={{
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.85rem',
+                          fontWeight: '500',
+                          padding: '4px 0',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        • {sub}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
