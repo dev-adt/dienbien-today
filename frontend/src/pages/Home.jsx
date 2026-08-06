@@ -755,7 +755,7 @@ export const Home = () => {
               Hệ thống AI Điện Biên hỗ trợ tra cứu quy hoạch đất đai, thủ tục cấp phép đầu tư & kết nối trực tiếp với Ban Quản lý các Khu công nghiệp.
             </p>
             <button
-              onClick={() => alert("Trợ lý AI Đầu tư Điện Biên đang sẵn sàng kết nối bạn với Sở Kế hoạch & Đầu tư tỉnh Điện Biên!")}
+              onClick={() => navigate('/register')}
               style={{
                 background: '#ffffff',
                 color: '#0B5FFF',
@@ -765,8 +765,11 @@ export const Home = () => {
                 fontSize: '1rem',
                 fontWeight: '800',
                 cursor: 'pointer',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                transition: 'transform 0.2s ease'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
               Khám phá cơ hội đầu tư ngay 📊
             </button>
@@ -816,21 +819,6 @@ export const Home = () => {
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                 <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0B5FFF' }}>{prod.price}</span>
-                <button
-                  onClick={() => alert(`Đã ghi nhận yêu cầu đặt mua sản phẩm ${prod.name} qua Trợ lý AI!`)}
-                  style={{
-                    background: '#14B86A',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Đặt mua hàng 🛒
-                </button>
               </div>
             </div>
           ))}
@@ -998,18 +986,51 @@ export const Home = () => {
 
         <div className="grid-4-cols" style={{ marginBottom: '2.5rem' }}>
           {homeMembers.map((mem, idx) => (
-            <div key={idx} style={{ backgroundColor: 'var(--surface-2)', borderRadius: '20px', border: '1px solid var(--border)', padding: '1.5rem', textAlign: 'center', boxShadow: 'var(--shadow)' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: mem.bg, color: mem.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: '800', margin: '0 auto 12px auto', border: '2px solid var(--border)' }}>
-                {mem.initials}
+            <div
+              key={idx}
+              style={{
+                backgroundColor: 'var(--surface-2)',
+                borderRadius: '20px',
+                border: '1px solid var(--border)',
+                padding: '1.5rem',
+                textAlign: 'center',
+                boxShadow: 'var(--shadow)',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between',
+                height: '100%',
+                minHeight: '350px'
+              }}
+            >
+              <div>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: mem.bg, color: mem.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: '800', margin: '0 auto 12px auto', border: '2px solid var(--border)' }}>
+                  {mem.initials}
+                </div>
+
+                {/* Company Name with fixed 2-line slot */}
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '4px', minHeight: '2.8rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
+                  {mem.name}
+                </h3>
+
+                {/* Tier Badge Pill */}
+                <div style={{ minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '4px 0 8px 0' }}>
+                  <span style={{ backgroundColor: mem.tier === 'Platinum' ? 'rgba(11,95,255,0.15)' : mem.tier === 'Gold' ? 'rgba(246,184,0,0.15)' : 'rgba(20,184,106,0.15)', color: mem.tier === 'Platinum' ? '#0B5FFF' : mem.tier === 'Gold' ? '#D97706' : '#14B86A', fontSize: '0.75rem', fontWeight: '800', padding: '3px 12px', borderRadius: '12px', display: 'inline-block' }}>
+                    HỘI VIÊN {mem.tier.toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Industry & City Tag */}
+                <p style={{ fontSize: '0.78rem', color: '#0B5FFF', fontWeight: '700', margin: '0 0 8px 0', minHeight: '1.2rem' }}>
+                  {mem.industry} · {mem.city}
+                </p>
+
+                {/* Summary Description with fixed 2-line slot */}
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px', minHeight: '2.6rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {mem.description}
+                </p>
               </div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '4px' }}>{mem.name}</h3>
-              <span style={{ backgroundColor: mem.tier === 'Platinum' ? 'rgba(11,95,255,0.15)' : mem.tier === 'Gold' ? 'rgba(246,184,0,0.15)' : 'rgba(20,184,106,0.15)', color: mem.tier === 'Platinum' ? '#0B5FFF' : mem.tier === 'Gold' ? '#D97706' : '#14B86A', fontSize: '0.75rem', fontWeight: '800', padding: '3px 12px', borderRadius: '12px', display: 'inline-block', margin: '4px 0 10px 0' }}>
-                HỘI VIÊN {mem.tier.toUpperCase()}
-              </span>
-              <p style={{ fontSize: '0.78rem', color: '#0B5FFF', fontWeight: '700', margin: '0 0 8px 0' }}>{mem.industry} · {mem.city}</p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {mem.description}
-              </p>
+
+              {/* Bottom Anchored Contact Button */}
               <button
                 onClick={() => navigate('/members')}
                 style={{
@@ -1017,11 +1038,12 @@ export const Home = () => {
                   background: 'var(--surface-0)',
                   border: '1px solid var(--border)',
                   color: 'var(--text-primary)',
-                  padding: '8px 0',
+                  padding: '9px 0',
                   borderRadius: '12px',
                   fontSize: '0.85rem',
                   fontWeight: '700',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  marginTop: 'auto'
                 }}
               >
                 Liên hệ hợp tác 🤝
