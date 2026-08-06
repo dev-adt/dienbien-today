@@ -1,3 +1,7 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 import { CATEGORIES_DATA } from '../constants/categories';
 
 export const Navbar = () => {

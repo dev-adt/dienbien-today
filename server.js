@@ -1729,7 +1729,7 @@ app.get('/api/posts', async (req, res) => {
     // Tự động chuyển trạng thái bài viết quá hạn sang 'hidden' (Đã bị ẩn) một cách an toàn
     try {
       await db.query(
-        "UPDATE posts SET status = 'hidden' WHERE deadline IS NOT NULL AND deadline >= '1970-01-01' AND status = 'approved' AND deadline < ?",
+        "UPDATE posts SET status = 'hidden' WHERE status = 'approved' AND CAST(deadline AS CHAR) > '1970-01-01' AND deadline < ?",
         [todayStr]
       );
     } catch (e) {
